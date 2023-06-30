@@ -1,5 +1,6 @@
 from flask import Flask, request, redirect, render_template, url_for, flash
 from flask import current_app as app
+from .database import db
 from application.models import User, Category, Product
 
 @app.route('/')
