@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sansita+Swashed:wght@700&display=swap" rel="stylesheet">
+  <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
+  <title>Welcome to the Grocery Store</title>
+</head>
+
+<body>
+  <div class="img"></div>
+  <div class="container-fluid">
+    <div class="background"></div>
+    <div class="popup">
+      <h1>Welcome to the Grocery Store!</h1>
+      <div class="dropdown-message">Login using:</div>
+      <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="userTypeDropdown" data-bs-toggle="dropdown"
+          aria-expanded="false">
+          Select User Type
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="userTypeDropdown">
+          <li><a class="dropdown-item" href="{{ url_for('manager_login') }}">Manager</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('user_login') }}">User</a></li>
+          <!--<li><a class="dropdown-item" href="manager_login.html">Manager</a></li>
+          <li><a class="dropdown-item" href="user_login.html">User</a></li>-->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
