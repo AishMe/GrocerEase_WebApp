@@ -2,6 +2,17 @@ from flask import Flask, request, redirect, render_template, url_for, flash
 from flask import current_app as app
 from .database import db
 from application.models import User, Category, Product
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField
+from wtforms.validators import DataRequired
+
+
+# Create a Form Class
+class NamerForm(FlaskForm):
+    name = StringField("What's your name? ", validators=[DataRequired()])
+    submit = SubmitField("Submit")
+
+
 
 @app.route('/')
 def index():
@@ -111,3 +122,12 @@ def page_not_found(e):
 @app.errorhandler(500)
 def page_not_found(e):
     return render_template('error500.html'), 500
+
+# Create Name Page
+@app.route('/name', methods=["GET", "POST"])
+def name():
+    name = None
+    form = NamerForm()
+    return render_template('name.html', 
+                           name = name, 
+                           form = form)
