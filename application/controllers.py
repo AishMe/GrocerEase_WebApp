@@ -10,13 +10,41 @@ from wtforms.validators import DataRequired
 app.config['SECRET_KEY'] = "harekrishna"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.sqlite3'
 
+
 # Create a Form Class
 class UserForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
+# Update Database Record
+@app.route('/update/<int:user_id>', methods=['GET', 'POST'])
+def update(user_id):
+    form = UserForm()
+    name_to_update = User.query.get_or_404(user_id)
+    if request.method == 'POST':
+        name_to_update.name = request.form['name']
+        name_to_update.email = request.form['email']
+        try: 
+            db.session.commit()
+            flash('User Updated Successfully!')
+            return render_template('update.html', 
+                                   form=form, 
+                                   name_to_update=name_to_update)
+    
+        except: 
+            flash('Error! Looks like there was a problem. Please try again...')
+            return render_template('update.html', 
+                                   form=form, 
+                                   name_to_update=name_to_update)
+    
+    else:
+        return render_template('update.html', 
+                                   form=form, 
+                                   name_to_update=name_to_update)
 
+
+# Create a Namer Form
 class NamerForm(FlaskForm):
     name = StringField("What's your name?", validators=[DataRequired()])
     submit = SubmitField("Submit")
