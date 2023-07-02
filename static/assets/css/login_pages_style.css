@@ -9,7 +9,8 @@
 
 body {
   /*background: linear-gradient(90deg, rgba(2, 0, 36, 1) 0%, rgba(75, 14, 154, 1) 35%, rgba(0, 212, 255, 1) 100%);*/
-  background: radial-gradient(rgb(250, 211, 123) 45%, rgb(204, 213, 150) 75%);
+  /*background: radial-gradient(rgb(250, 211, 123) 45%, rgb(204, 213, 150) 75%);*/
+  background: linear-gradient(90deg, rgb(140, 241, 102) 0%, rgb(212, 252, 192) 0%);
   font-family: 'Poppins', sans-serif;
 
 }

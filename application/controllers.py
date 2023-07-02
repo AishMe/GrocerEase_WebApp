@@ -7,10 +7,20 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 
 
+app.config['SECRET_KEY'] = "harekrishna"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.sqlite3'
+
 # Create a Form Class
-class NamerForm(FlaskForm):
-    name = StringField("What's your name? ", validators=[DataRequired()])
+class UserForm(FlaskForm):
+    name = StringField("Name", validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired()])
     submit = SubmitField("Submit")
+
+
+class NamerForm(FlaskForm):
+    name = StringField("What's your name?", validators=[DataRequired()])
+    submit = SubmitField("Submit")
+
 
 
 
@@ -128,6 +138,35 @@ def page_not_found(e):
 def name():
     name = None
     form = NamerForm()
+
+    # Validate Form
+    if form.validate_on_submit():
+        name = form.name.data
+        form.name.data = ''
+        flash("Registration Successful!!")
+
     return render_template('name.html', 
                            name = name, 
                            form = form)
+
+
+@app.route('/user/add', methods=['GET', 'POST'])
+def add_user():
+    name = None
+    form = UserForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user is None:
+            user = User(name=form.name.data, email=form.email.data)
+            db.session.add(user)
+            db.session.commit()
+        name = form.name.data
+        form.name.data = ''
+        form.email.data = ''
+        flash('User Added Successfully!')
+    all_users = User.query.order_by(User.date_added)
+    return render_template('add_user.html', 
+                           form=form, 
+                           name=name, 
+                           all_users=all_users)
+
