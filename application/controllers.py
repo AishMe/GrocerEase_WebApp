@@ -46,6 +46,16 @@ def password(self, password):
 def verify_password(self, password):
     return check_password_hash(self.password_hash, password)
 
+# JSON Demo
+@app.route('/pizza')
+def fav_pizzas_list():
+    favorite_pizza = {
+        "Harry": "Peparoni", 
+        "Ammu": "Cheeze", 
+        "Ria": "Pinapple"
+    }
+    return favorite_pizza
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -175,7 +185,13 @@ def test_pw():
         #flash("Registration Successful!!")
 
     pw_to_check = User.query.filter_by(email=email).first()
-    passed = check_password_hash(pw_to_check.password_hash, password)
+
+    if pw_to_check is not None:
+        passed = check_password_hash(pw_to_check.password_hash, password)
+    else:
+    # Handle the case when the user doesn't exist
+        passed = False
+    
     return render_template('test_pw.html', 
                            email = email,
                            password = password,  
