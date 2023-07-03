@@ -3,8 +3,9 @@ from flask import current_app as app
 from .database import db
 from application.models import User, Category, Product
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired
+from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
+from wtforms.validators import DataRequired, EqualTo, Length
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 app.config['SECRET_KEY'] = "harekrishna"
@@ -15,33 +16,16 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.sqlite3'
 class UserForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired()])
+    password_hash = PasswordField("Password", validators=[DataRequired(), EqualTo('password_hash_confirm', message='Both Passwords must Match!')])
+    password_hash_confirm = PasswordField("Confirm Password", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
-# Update Database Record
-@app.route('/update/<int:user_id>', methods=['GET', 'POST'])
-def update(user_id):
-    form = UserForm()
-    name_to_update = User.query.get_or_404(user_id)
-    if request.method == 'POST':
-        name_to_update.name = request.form['name']
-        name_to_update.email = request.form['email']
-        try: 
-            db.session.commit()
-            flash('User Updated Successfully!')
-            return render_template('update.html', 
-                                   form=form, 
-                                   name_to_update=name_to_update)
-    
-        except: 
-            flash('Error! Looks like there was a problem. Please try again...')
-            return render_template('update.html', 
-                                   form=form, 
-                                   name_to_update=name_to_update)
-    
-    else:
-        return render_template('update.html', 
-                                   form=form, 
-                                   name_to_update=name_to_update)
+
+# Create a Namer Form
+class PasswordForm(FlaskForm):
+    email = StringField("Enter Email ID", validators=[DataRequired()])
+    password_hash = PasswordField("Enter password", validators=[DataRequired()])
+    submit = SubmitField("Submit")
 
 
 # Create a Namer Form
@@ -50,7 +34,17 @@ class NamerForm(FlaskForm):
     submit = SubmitField("Submit")
 
 
+# Password Hashing Stuffs
+@property
+def password(self):
+    raise AttributeError("Password is not a readable atrribute!")
 
+@password.setter
+def password(self, password):
+    self.password_hash = generate_password_hash(password)
+
+def verify_password(self, password):
+    return check_password_hash(self.password_hash, password)
 
 @app.route('/')
 def index():
@@ -161,6 +155,35 @@ def page_not_found(e):
 def page_not_found(e):
     return render_template('error500.html'), 500
 
+
+# Create Password Test Page
+@app.route('/test_pw', methods=["GET", "POST"])
+def test_pw():
+    email = None
+    password = None
+    pw_to_check = None
+    passed = None
+    form = PasswordForm()
+
+    # Validate Form
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password_hash.data
+        # Clear the Form
+        form.email.data = ''
+        form.password_hash.data = ''
+        #flash("Registration Successful!!")
+
+    pw_to_check = User.query.filter_by(email=email).first()
+    passed = check_password_hash(pw_to_check.password_hash, password)
+    return render_template('test_pw.html', 
+                           email = email,
+                           password = password,  
+                           pw_to_check = pw_to_check, 
+                           passed = passed, 
+                           form = form)
+
+
 # Create Name Page
 @app.route('/name', methods=["GET", "POST"])
 def name():
@@ -185,12 +208,14 @@ def add_user():
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user is None:
-            user = User(name=form.name.data, email=form.email.data)
+            hashed_pw = generate_password_hash(form.password_hash.data, "sha256")
+            user = User(name=form.name.data, email=form.email.data, password_hash=hashed_pw)
             db.session.add(user)
             db.session.commit()
         name = form.name.data
         form.name.data = ''
         form.email.data = ''
+        form.password_hash.data = ''
         flash('User Added Successfully!')
     all_users = User.query.order_by(User.date_added)
     return render_template('add_user.html', 
@@ -198,3 +223,58 @@ def add_user():
                            name=name, 
                            all_users=all_users)
 
+
+# Update Database Record
+@app.route('/update/<int:user_id>', methods=['GET', 'POST'])
+def update(user_id):
+    form = UserForm()
+    name_to_update = User.query.get_or_404(user_id)
+    if request.method == 'POST':
+        name_to_update.name = request.form['name']
+        name_to_update.email = request.form['email']
+        try: 
+            db.session.commit()
+            flash('User Updated Successfully!')
+            return render_template('update.html', 
+                                   form=form, 
+                                   name_to_update=name_to_update, 
+                                   user_id=user_id)
+    
+        except: 
+            flash('Error! Looks like there was a problem. Please try again...')
+            return render_template('update.html', 
+                                   form=form, 
+                                   name_to_update=name_to_update, 
+                                   user_id=user_id)
+    
+    else:
+        return render_template('update.html', 
+                                   form=form, 
+                                   name_to_update=name_to_update, 
+                                   user_id=user_id)
+
+
+# Delete a User from the Database Record
+@app.route('/delete/<int:user_id>')
+def delete(user_id):
+    user_to_delete = User.query.get_or_404(user_id)
+    name = None
+    form = UserForm()
+
+    try: 
+        db.session.delete(user_to_delete)
+        db.session.commit()
+        flash("Account Deleted Successfully!")
+
+        all_users = User.query.order_by(User.date_added)
+        return render_template('add_user.html', 
+                           form=form, 
+                           name=name, 
+                           all_users=all_users)
+
+    except: 
+        flash("Woops! There was a problem deleting the account. Please try again...")
+        return render_template('add_user.html', 
+                           form=form, 
+                           name=name, 
+                           all_users=all_users)

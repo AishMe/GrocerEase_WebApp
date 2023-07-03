@@ -42,28 +42,38 @@
 {% else %}
     <h1>User Registration Form</h1>
     <br/>
-    <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
-        <form method=POST>
-            {{ form.hidden_tag() }}
+    <div class="d-flex justify-content-center">
+        <div class="card" style="width: 600px;">
+            <div class="card-body">
+                <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
+                    <form method=POST>
+                        {{ form.hidden_tag() }}
 
-            {{ form.name.label(
-                class="form-label") }}
+                        {{ form.name.label(
+                            class="form-label") }}
 
-            {{ form.name(
-                class="form-control", 
-                value=name_to_update.name) }}
-            <br/>
+                        {{ form.name(
+                            class="form-control", 
+                            value=name_to_update.name) }}
+                        <br/>
 
-            {{ form.email.label(
-                class="form-label") }}
+                        {{ form.email.label(
+                            class="form-label") }}
 
-            {{ form.email(
-                class="form-control", 
-                value=name_to_update.email) }}
-            <br/>
-
-            {{ form.submit(class="btn btn-primary") }}
-        </form>
+                        {{ form.email(
+                            class="form-control", 
+                            value=name_to_update.email) }}
+                        <br/><br/>
+                        
+                        <div><center>
+                            {{ form.submit(class="btn btn-success col-4 mx-auto d-inline-block", value="Update") }}
+                            <span style="margin: 30px;"></span>
+                            <a href="{{ url_for('delete', user_id=user_id) }}" class="btn btn-danger col-4 mx-auto d-inline-block">Delete</a>
+                        </center></div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
 <br/><br/><br/>
