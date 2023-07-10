@@ -1,16 +1,24 @@
 from flask import Flask, request, redirect, render_template, url_for, flash
 from flask import current_app as app
 from .database import db
-from application.models import User, Category, Product
+from application.models import User, Posts
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
 from wtforms.validators import DataRequired, EqualTo, Length
+from wtforms.widgets import TextArea
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
 app.config['SECRET_KEY'] = "harekrishna"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.sqlite3'
 
+# Create a Posts Form
+class PostForm(FlaskForm):
+    title = StringField("Title", validators=[DataRequired()])
+    content = StringField("Content", validators=[DataRequired()], widget=TextArea())
+    author = StringField("Author", validators=[DataRequired()])
+    slug = StringField("Slug", validators=[DataRequired()])
+    submit = SubmitField("Submit")
 
 # Create a Form Class
 class UserForm(FlaskForm):
@@ -294,3 +302,26 @@ def delete(user_id):
                            form=form, 
                            name=name, 
                            all_users=all_users)
+    
+@app.route('/add-post', methods=['GET', 'POST'])
+def add_post():
+    form = PostForm()
+
+    if form.validate_on_submit():
+        post = Posts(title=form.title.data, content=form.content.data, author=form.author.data)
+
+        # Clear the Form
+        form.title.data = ''
+        form.content.data = ''
+        form.author.data = ''
+        form.slug.data = ''
+
+        # Add post data to the database
+        db.session.add(post)
+        db.session.commit()
+
+        # Return a Message
+        flash('Blog Post Submitted Successfully!')
+
+    # Redirect to the webpage
+    return render_template('add_post.html', form=form)

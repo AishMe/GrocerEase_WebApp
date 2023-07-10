@@ -11,20 +11,11 @@ class User(db.Model):
     role = db.Column(db.Text, nullable=False)
     password_hash = db.Column(db.String(128))
 
-class Category(db.Model):
-    section_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.Text, nullable=False)
-
-class Product(db.Model):
-    product_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.Text, nullable=False)
-    manufacture_date = db.Column(db.Text)
-    expiry_date = db.Column(db.Text)
-    rate_per_unit = db.Column(db.REAL)
-    section_id = db.Column(db.Integer, db.ForeignKey('category.section_id'))
-
-class Cart(db.Model):
-    cart_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
-    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'))
-    quantity = db.Column(db.Integer)
+# Create a Blog Post Model
+class Posts(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255))
+    content = db.Column(db.Text)
+    author = db.Column(db.String(255))
+    date_posted = db.Column(db.DateTime, default=datetime.utcnow)
+    slug = db.Column(db.String(255))

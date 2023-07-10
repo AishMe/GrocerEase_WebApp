@@ -29,4 +29,4 @@ Thumbs.db
 /.venv
 /.gradle
 
-*.sqlite3
+/db_directory/.sqlite3
