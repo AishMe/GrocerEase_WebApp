@@ -15,15 +15,13 @@
 <h1>Blog Posts...</h1>
 <br/>
 
-{% for post in posts %}
 <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
-    <h1><a href="{{ url_for('post', id=post.id) }}">{{ post.title }}</a></h1><br/>
+    <h1>{{ post.title }}</h1><br/>
     <small>By: {{ post.author }}<br/>
     {{ post.date_posted }}</small><br/><br/>
-    {{ post.content }}<br/>
-    <a href="{{ url_for('post', id=post.id) }}" class="btn btn-outline-secondary btn-sm">View Post</a>
-    <br/>
+    {{ post.content }}<br/><br/>
 </div>
-{% endfor %}
+
+<a href="{{ url_for('posts') }}" class="btn btn-outline-secondary btn-sm">Back to Blog</a>
 
 {% endblock %}
