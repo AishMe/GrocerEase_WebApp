@@ -21,10 +21,16 @@ class UserForm(FlaskForm):
     submit = SubmitField("Submit")
 
 
-# Create a Namer Form
+# Create a Password Form
 class PasswordForm(FlaskForm):
     email = StringField("Enter Email ID", validators=[DataRequired()])
     password_hash = PasswordField("Enter password", validators=[DataRequired()])
+    submit = SubmitField("Submit")
+
+
+# Create a Category Form
+class CategoryForm(FlaskForm):
+    cat_name = StringField("Enter the Category Name", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
 
@@ -123,20 +129,6 @@ def user_register():
         return redirect('/user_login')
 
     return render_template('user_register.html')
-
-
-@app.route('/manager_dashboard')
-def manager_dashboard():
-    # Fetch manager's name from the database
-    manager_username = "manager1"  # Replace with the logged-in manager's username
-    manager = User.query.filter_by(username=manager_username, role='Manager').first()
-
-    if manager:
-        manager_name = manager.name
-    else:
-        manager_name = "Unknown Manager"
-
-    return render_template('manager_dashboard.html', name=manager_name)
 
 
 @app.route('/user_dashboard')
@@ -294,3 +286,31 @@ def delete(user_id):
                            form=form, 
                            name=name, 
                            all_users=all_users)
+    
+@app.route('/manager/category', methods=['GET', 'POST'])
+def add_category():
+    name = None
+    form = CategoryForm()
+    if form.validate_on_submit():
+        category = Category.query.filter_by(name=form.cat_name.data).first()
+        if category is None:
+            category = Category(name=form.cat_name.data)
+            db.session.add(category)
+            db.session.commit()
+        name = form.cat_name.data
+        form.cat_name.data = ''
+        flash('Category Added Successfully!')
+    all_categories = Category.query.order_by(Category.section_id)
+    return render_template('add_category.html', 
+                           form=form, 
+                           name=name, 
+                           all_categories=all_categories)
+
+# Show the Posts
+@app.route('/manager_dashboard')
+def manager_dashboard():
+    # Grab all the posts from the database
+    products = Product.query
+    prod_count = Product.query.count()
+    categories = Category.query.order_by(Category.section_id)
+    return render_template('manager_dashboard.html', products=products, categories=categories, prod_count=prod_count)

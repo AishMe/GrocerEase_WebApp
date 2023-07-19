@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'manager_base.html' %}
 
 {% block content %}
 
@@ -12,27 +12,72 @@
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="{{ url_for('static', filename='dashboard_style.css') }}" rel="stylesheet">
+  <!-- <link href="{{ url_for('static', filename='dashboard_style.css') }}" rel="stylesheet">-->
   <title>Manager Dashboard</title>
+  
 </head>
 
 <body>
-  <nav class="navbar navbar-dark bg-dark">
-    <div class="container-fluid">
-      <span class="navbar-text">Manager {{ name }}'s Dashboard</span>
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="#">Summary</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Logout</a>
-        </li>
-      </ul>
+<!--
+<h1>Categories</h1>
+<br/>
+{% for category in categories %}
+<div class="card" style="width: 18rem;">
+  <img class="card-img-top" src="..." alt="Card image cap" style="width: 100%; height: 12vw; object-fit: cover;">
+  <div class="card-body">
+    <h1>{{ category.name }}</h1>
+    {% if prod_count == 0 %}
+      <p class="card-text">No Products Created</p>
+    {% else %}
+      <p class="card-text"><a href="url_for('add_user')">View Products {{ prod_count }}</a></p>
+    {% endif %}
+    <a class="btn btn-primary btn-lg rounded-circle" href="{{ url_for('add_user') }}" role="button">+</a><br/>
+
+  </div>
+</div>
+
+{% endfor %}
+-->
+<br/><br/>
+<div class="d-flex justify-content-between align-items-center">
+  <h1>Categories</h1>
+  <a class="btn btn-primary btn-lg rounded-pill" href="{{ url_for('add_category') }}" role="button">Add Category</a>
+</div>
+<br/><br/><br/><br/>
+
+<div class="row">
+  {% for category in categories %}
+    <div class="col-md-4 d-flex justify-content-center"> <!-- Added "d-flex justify-content-center" -->
+      <div class="card mb-4 shadow p-3 mb-5 bg-white rounded" style="width: 18rem;">
+        <img class="card-img-top" src="./static/images/fruits&Veges.jpeg" alt="Card image cap" style="width: 100%; height: 10vw; object-fit: cover;">
+        <div class="card-body">
+          <center><h1 style="color: black">{{ category.name }}</h1></center>
+          {% if prod_count == 0 %}
+            <center><p class="card-text">No Products Created</p></center><br/>
+          {% else %}
+            <center><p class="card-text"><a href="url_for('add_user')">View Products {{ prod_count }}</a></p></center><br/>
+          {% endif %}
+          <center><a class="btn btn-primary btn-lg rounded-circle" href="{{ url_for('add_user') }}" role="button">+</a></center><br/>
+
+          <div class="d-flex justify-content-between">
+            <a href="{{ url_for('add_user', user_id=user_id) }}" class="btn btn-warning flex-fill">Edit</a>
+            <span style="flex-grow: 1;"></span>
+            <a href="{{ url_for('add_user', user_id=user_id) }}" class="btn btn-danger flex-fill">Delete</a>
+            
+          </div>
+        </div>
+      </div>
     </div>
-  </nav>
+    {% if loop.index % 3 == 0 %}
+      </div><div class="row">
+    {% endif %}
+  {% endfor %}
+</div>
+
 
   <!-- Bootstrap Bundle with Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 
 </html>

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% for message in get_flashed_messages() %}
+
+
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+{% endfor %}
+
+    <h1><center>Add New Category</center></h1>
+    <br/>
+    <div class="d-flex justify-content-center">
+        <div class="card" style="width: 400px;">
+            <div class="card-body">
+                <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
+                    <form method=POST>
+                        <br/>
+                        {{ form.hidden_tag() }}
+
+                        {{ form.cat_name.label(
+                            class="form-label") }}
+
+                        {{ form.cat_name(
+                            class="form-control") }}
+                        <br/><br/>
+
+                            <center>{{ form.submit(class="btn btn-success d-grid col-5 mx-auto", value="Save") }}</center>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<br/><br/><br/>
+
+
+{% endblock %}
