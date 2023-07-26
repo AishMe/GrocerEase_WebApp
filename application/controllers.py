@@ -333,7 +333,35 @@ def posts():
     posts = Posts.query.order_by(Posts.date_posted)
     return render_template('posts.html', posts=posts)
 
+# Show Individual Post
 @app.route('/posts/<int:id>')
 def post(id):
     post = Posts.query.get_or_404(id)
     return render_template('post.html', post=post)
+
+# Edit the Post
+@app.route('/posts/edit/<int:id>', methods=['GET', 'POST'])
+def edit_post(id):
+    post = Posts.query.get_or_404(id)
+    form = PostForm()
+
+    if form.validate_on_submit():
+        
+        post.title = form.title.data
+        post.content = form.content.data
+        post.author = form.author.data
+        post.slug = form.slug.data
+
+        # Update the Database
+        db.session.add(post)
+        db.session.commit()
+        flash('Post Has Been Updated!')
+
+        return redirect(url_for('post', id=post.id))
+    
+    form.title.data = post.title
+    form.content.data = post.content
+    form.author.data = post.author
+    form.slug.data = post.slug
+
+    return render_template('edit_post.html', form=form)

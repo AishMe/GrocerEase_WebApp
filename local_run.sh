@@ -17,7 +17,7 @@ fi
 . .env/bin/activate
 
 export ENV=development
-python main.py
+python3 main.py
 
 # Work done. So deactivate the virtual env
 deactivate
