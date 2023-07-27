@@ -1,0 +1,80 @@
+.cards-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+.card {
+    margin: 0.5em;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+  background-color: #e1e1e1;
+  width: 5em;
+  height: 5em;
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+body {
+    font-family: "Brandon Grotesque", Helvetica, sans-serif;
+    background-color: #C1E1C1;
+  }
+  
+
+.wrapper {
+    width: 1440px;
+    max-width: 80%;
+    margin: 0 auto;
+    height: 55rem;
+  }
+  
+  #banner {
+    background-image: url('https://muffingroup.com/blog/wp-content/uploads/2021/03/gr.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+  #banner header {
+    padding: 2rem, 0;
+  }
+  #banner #logo {
+    color: #C1E1C1;
+    font-weight: 700;
+    font-size: 2rem;
+    float: left;
+    clear: right;
+  }
+  #banner #logo span {
+    font-weight: 400;
+  }
+  #banner nav {
+    float: right;
+  }
+  #banner nav a {
+    color: white;
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-decoration: none;
+    margin-left: 2rem;
+  }
+  #banner .wrapper {
+    padding: 2rem 0 6rem 0;
+  }
+  #banner .wrapper .title, #banner .wrapper .sub_title {
+    color: #C1E1C1;
+    text-align: center;
+  }
+  #banner .wrapper .title {
+    font-size: 5rem;
+    margin: 0;
+  }
+
+  .title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 42rem;
+  }
+
+  

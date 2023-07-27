@@ -1,6 +1,3 @@
-{% extends 'base.html' %}
-
-{% block content %}
 
 <!doctype html>
 <html lang="en">
@@ -12,27 +9,99 @@
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="d{{ url_for('static', filename='dashboard_style.css') }}" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link href="{{ url_for('static', filename='assets/css/dashboard_style.css') }}" rel="stylesheet">
   <title>User Dashboard</title>
 </head>
 
 <body>
-  <nav class="navbar navbar-dark bg-dark">
-    <div class="container-fluid">
-      <span class="navbar-text">User {{ name }}'s Dashboard</span>
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="#">Summary</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Logout</a>
-        </li>
-      </ul>
+
+    <section id="banner">
+      <div class="wrapper">
+          <header>
+              <p id="logo">Grocer<span style="color: white;">Ease</span></p>
+
+              <nav>
+                  <a href="#"">Home</a>
+                  <a href="#">Portfolio</a>
+                  <a href="#">Services</a>
+                  <a href="#">Get in touch</a>
+              </nav>
+          </header>
+
+          <div id="content">
+            <br/><br/><br/>
+              <h1 class="title"><strong>Categories & Products</strong></h1>
+          </div>
+
+      </div>
+  </section>
+
+
+  <br/><br/><br/>
+  {% for category in categories %}
+  <div class="container py-4">
+    <div id="carouselExampleControls{{ loop.index }}" class="card carousel slide bg-light shadow p-3 mb-5 bg-body-tertiary rounded">
+      <br/>
+      <center><h1 style="color: black;">{{ category.name }}</h1></center>
+      <hr/>
+      <br/>
+      <div class="carousel-inner">
+        {% set product_counter = 0 %}
+        {% for product in products_by_category[category.section_id] %}
+          {% if loop.index0 % 4 == 0 %}
+            <div class="carousel-item {% if loop.index0 == 0 %}active{% endif %}">
+              <div class="cards-wrapper">
+          {% endif %}
+          <div class="card" style="width: 18rem;">
+            <img src="https://w.forfun.com/fetch/2e/2e0e582530e34a1a196bdcb75140be15.jpeg" class="card-img-top" alt="...">
+            <div class="card-body">
+              <h5 class="card-title" style="color: black">{{ product.name }}</h5>
+              <h6 class="card-text" style="color: black">Vendor</h6>
+              <p class="card-text">Manufacture Date: {{ product.manufacture_date }}<br/>
+                Expiry Date: {{ product.expiry_date }}<br/>
+                Rate per unit: Rs.{{ product.rate_per_unit }}
+              </p>
+              <!-- Add other product information as needed -->
+
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <input type="number" class="form-control" placeholder="Qtn(kg)" min="0" max="5" required>
+                </div>
+                <div class="col-md-6 text-end">
+                  <a href="https://www.google.com"><button class="btn btn-outline-primary"><i class="fa fa-shopping-cart"></i></button></a>
+                  <a href="https://www.google.com"><button class="btn btn-outline-success"><i class="fa fa-shopping-bag"></i></button></a>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% if loop.index0 % 4 == 3 or loop.last %}
+              </div>
+            </div>
+          {% endif %}
+          {% set product_counter = product_counter + 1 %}
+        {% endfor %}
+      </div>
+      <br/>
+      <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls{{ loop.index }}" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls{{ loop.index }}" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
     </div>
-  </nav>
+  </div>
+  <br/>
+{% endfor %}
+
+    
+
+  <!-- Option 1: Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
 </body>
 
 </html>
 
-{% endblock %}

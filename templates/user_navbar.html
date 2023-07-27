@@ -1,30 +1,38 @@
-<nav class="navbar navbar-expand-lg bg-body-tertiary">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="{{ url_for('index') }}">GrocerEase</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
-        <ul class="nav justify-content-end nav-tabs">
-          
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('test_pw') }}">Home</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('name') }}">Profile</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('add_user') }}">Cart</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('user_login') }}">Logout</a>
-          </li>
-        </ul>
+<!doctype html>
+<html lang="en">
 
-        <!--<form class="d-flex justify-content-end" role="search">
-          <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-          <button class="btn btn-outline-success" type="submit">Search</button>
-        </form>-->
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link href="{{ url_for('static', filename='assets/css/dashboard_style.css') }}" rel="stylesheet">
+  <title>User Dashboard</title>
+</head>
+
+<body>
+<section id="banner">
+  <div class="wrapper">
+      <header>
+          <p id="logo">Grocer<span style="color: white;">Ease</span></p>
+
+          <nav>
+              <a href="#"">Home</a>
+              <a href="#">Portfolio</a>
+              <a href="#">Services</a>
+              <a href="#">Get in touch</a>
+          </nav>
+      </header>
+
+      <div id="content">
+        <br/><br/><br/><br/><br/><br/>
+          <h1 class="title"><strong>Categories & Products</strong></h1>
       </div>
-    </div>
-  </nav>
+
+  </div>
+</section>
+</body>
+</html>

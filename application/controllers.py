@@ -131,20 +131,6 @@ def user_register():
     return render_template('user_register.html')
 
 
-@app.route('/user_dashboard')
-def user_dashboard():
-    # Fetch user's name from the database
-    user_username = "user1"  # Replace with the logged-in user's username
-    user = User.query.filter_by(username=user_username, role='User').first()
-
-    if user:
-        user_name = user.name
-    else:
-        user_name = "Unknown User"
-
-    return render_template('user_dashboard.html', name=user_name)
-
-
 # Create Custom Error Pages
 
 # Invalid Page
@@ -287,7 +273,7 @@ def delete(user_id):
                            name=name, 
                            all_users=all_users)
     
-@app.route('/manager/category', methods=['GET', 'POST'])
+@app.route('/manager/add_category', methods=['GET', 'POST'])
 def add_category():
     name = None
     form = CategoryForm()
@@ -310,7 +296,37 @@ def add_category():
 @app.route('/manager_dashboard')
 def manager_dashboard():
     # Grab all the posts from the database
-    products = Product.query
     prod_count = Product.query.count()
-    categories = Category.query.order_by(Category.section_id)
-    return render_template('manager_dashboard.html', products=products, categories=categories, prod_count=prod_count)
+    categories = Category.query.order_by(Category.section_id).all()
+
+    # Create a dictionary to store products per category
+    products_by_category = {}
+
+    # Fetch products for each category and store them in the dictionary
+    for category in categories:
+        products = Product.query.filter_by(section_id=category.section_id).all()
+        products_by_category[category.section_id] = products
+
+    return render_template('manager_dashboard.html', 
+                           products=products, 
+                           categories=categories, 
+                           prod_count=prod_count, 
+                           products_by_category=products_by_category)
+
+# Show the Posts
+@app.route('/user_dashboard')
+def user_dashboard():
+    # Grab all the categories from the database
+    categories = Category.query.order_by(Category.section_id).all()
+
+    # Create a dictionary to store products per category
+    products_by_category = {}
+
+    # Fetch products for each category and store them in the dictionary
+    for category in categories:
+        products = Product.query.filter_by(section_id=category.section_id).all()
+        products_by_category[category.section_id] = products
+
+    return render_template('user_dashboard.html', products_by_category=products_by_category, categories=categories)
+
+

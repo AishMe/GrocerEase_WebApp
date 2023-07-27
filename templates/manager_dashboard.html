@@ -1,7 +1,3 @@
-{% extends 'manager_base.html' %}
-
-{% block content %}
-
 <!doctype html>
 <html lang="en">
 
@@ -12,58 +8,83 @@
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- <link href="{{ url_for('static', filename='dashboard_style.css') }}" rel="stylesheet">-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link href="{{ url_for('static', filename='assets/css/dashboard_style.css') }}" rel="stylesheet">
   <title>Manager Dashboard</title>
   
 </head>
 
 <body>
-<!--
-<h1>Categories</h1>
-<br/>
-{% for category in categories %}
-<div class="card" style="width: 18rem;">
-  <img class="card-img-top" src="..." alt="Card image cap" style="width: 100%; height: 12vw; object-fit: cover;">
-  <div class="card-body">
-    <h1>{{ category.name }}</h1>
-    {% if prod_count == 0 %}
-      <p class="card-text">No Products Created</p>
-    {% else %}
-      <p class="card-text"><a href="url_for('add_user')">View Products {{ prod_count }}</a></p>
-    {% endif %}
-    <a class="btn btn-primary btn-lg rounded-circle" href="{{ url_for('add_user') }}" role="button">+</a><br/>
 
-  </div>
-</div>
+  <section id="banner">
+    <div class="wrapper">
+        <header>
+            <p id="logo">Grocer<span style="color: white;">Ease</span></p>
 
-{% endfor %}
--->
-<br/><br/>
-<div class="d-flex justify-content-between align-items-center">
-  <h1>Categories</h1>
-  <a class="btn btn-primary btn-lg rounded-pill" href="{{ url_for('add_category') }}" role="button">Add Category</a>
-</div>
-<br/><br/><br/><br/>
+            <nav>
+                <a href="#"">Home</a>
+                <a href="#">Portfolio</a>
+                <a href="#">Services</a>
+                <a href="#">Get in touch</a>
+            </nav>
+        </header>
+
+        <div id="content">
+          <br/><br/><br/>
+            <h1 class="title"><strong>Categories & Products</strong></h1>
+            <div class="d-flex justify-content-center">
+              <a class="btn btn-primary btn-lg rounded-pill" style="height: 60px; width: 200px" href="{{ url_for('add_category') }}" role="button"><strong>Add Category</strong></a>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+<br/><br/><br/>
+  
 
 <div class="row">
   {% for category in categories %}
-    <div class="col-md-4 d-flex justify-content-center"> <!-- Added "d-flex justify-content-center" -->
-      <div class="card mb-4 shadow p-3 mb-5 bg-white rounded" style="width: 18rem;">
+    <div class="col-md-4 d-flex justify-content-center">
+      <div class="card bg-light mb-4 shadow-lg p-3 mb-5 bg-body rounded" style="width: 25rem;">
         <img class="card-img-top" src="./static/images/fruits&Veges.jpeg" alt="Card image cap" style="width: 100%; height: 10vw; object-fit: cover;">
         <div class="card-body">
-          <center><h1 style="color: black">{{ category.name }}</h1></center>
-          {% if prod_count == 0 %}
-            <center><p class="card-text">No Products Created</p></center><br/>
-          {% else %}
-            <center><p class="card-text"><a href="url_for('add_user')">View Products {{ prod_count }}</a></p></center><br/>
-          {% endif %}
-          <center><a class="btn btn-primary btn-lg rounded-circle" href="{{ url_for('add_user') }}" role="button">+</a></center><br/>
+          <center><h3 style="color: black">{{ category.name }}</h3></center>
+          
+          <!-- Add the following code to display all small cards inside the main card -->
+          <div class="overflow-auto" style="height: 300px;">
+            {% for product in products_by_category[category.section_id] %}
+              <div class="card mb-2 shadow p-3 mb-5 rounded" style="width: 310px;">
+                <div class="card-body">
+                  <center><h5 class="card-title" style="color: black">{{ product.name.capitalize() }}</h5></center>
+                  <hr style="margin-top: 1rem; border: 1px solid black;"/>
+                  <p class="card-text">Manufacture Date: {{ product.manufacture_date }}<br/>
+                    Expiry Date: {{ product.expiry_date }}<br/>
+                    Rate per unit: Rs.{{ product.rate_per_unit }}
+                  </p>
+                  <!-- Add a line break above the buttons -->
+                  <hr style="margin-top: 1rem; border: 1px solid black;">
 
+                  <!-- Add the buttons at the center (horizontally and vertically) -->
+                  <div class="d-flex justify-content-center align-items-center">
+                    <a href="{{ url_for('add_user', user_id=user_id) }}"><button class="btn btn-outline-warning"><i class="fa fa-pencil"></i>Edit</button></a>
+                    <span style="flex-grow: 0.5;"></span>
+                    <a href="{{ url_for('add_user', user_id=user_id) }}"><button class="btn btn-outline-danger"><i class="fa fa-trash"></i>Delete</button></a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <div>
+            <br/>
           <div class="d-flex justify-content-between">
-            <a href="{{ url_for('add_user', user_id=user_id) }}" class="btn btn-warning flex-fill">Edit</a>
+            <a href="{{ url_for('add_user', user_id=user_id) }}"><button class="btn btn-outline-primary"><i class="fa fa-plus-circle"></i>Add Items</button></a>
             <span style="flex-grow: 1;"></span>
-            <a href="{{ url_for('add_user', user_id=user_id) }}" class="btn btn-danger flex-fill">Delete</a>
-            
+            <a href="{{ url_for('add_user', user_id=user_id) }}"><button class="btn btn-outline-warning"><i class="fa fa-pencil"></i></button></a>
+            <span style="flex-grow: 0.3;"></span>
+            <a href="{{ url_for('add_user', user_id=user_id) }}"><button class="btn btn-outline-danger"><i class="fa fa-trash"></i></button></a>
+          </div>
           </div>
         </div>
       </div>
@@ -75,11 +96,16 @@
 </div>
 
 
+
+
+
+
+
+
+
   <!-- Bootstrap Bundle with Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 
 </html>
-
-{% endblock %}
