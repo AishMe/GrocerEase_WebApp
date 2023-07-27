@@ -18,10 +18,11 @@ class Category(db.Model):
 class Product(db.Model):
     product_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.Text, nullable=False)
-    manufacture_date = db.Column(db.Text)
-    expiry_date = db.Column(db.Text)
-    rate_per_unit = db.Column(db.REAL)
-    section_id = db.Column(db.Integer, db.ForeignKey('category.section_id'))
+    manufacture_date = db.Column(db.Text, nullable=False)
+    rate_per_unit = db.Column(db.REAL, nullable=False)
+    unit = db.Column(db.Text, nullable=False)
+    stock = db.Column(db.REAL, nullable=False)
+    section_id = db.Column(db.Integer, db.ForeignKey('category.section_id'), nullable=False)
 
 class Cart(db.Model):
     cart_id = db.Column(db.Integer, primary_key=True, autoincrement=True)

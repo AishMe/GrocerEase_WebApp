@@ -6,13 +6,14 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
 from wtforms.validators import DataRequired, EqualTo, Length
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 
 app.config['SECRET_KEY'] = "harekrishna"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.sqlite3'
 
 
-# Create a Form Class
+# Create a User Form
 class UserForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired()])
@@ -30,7 +31,16 @@ class PasswordForm(FlaskForm):
 
 # Create a Category Form
 class CategoryForm(FlaskForm):
-    cat_name = StringField("Enter the Category Name", validators=[DataRequired()])
+    category_name = StringField("Enter the Category Name", validators=[DataRequired()])
+    submit = SubmitField("Submit")
+
+
+# Create a Product Form
+class ProductForm(FlaskForm):
+    product_name = StringField("Product Name", validators=[DataRequired()])
+    rate = StringField("Rate", validators=[DataRequired()])
+    stock = StringField("Stock", validators=[DataRequired()])
+    unit = StringField("Unit", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
 
@@ -272,27 +282,10 @@ def delete(user_id):
                            form=form, 
                            name=name, 
                            all_users=all_users)
-    
-@app.route('/manager/add_category', methods=['GET', 'POST'])
-def add_category():
-    name = None
-    form = CategoryForm()
-    if form.validate_on_submit():
-        category = Category.query.filter_by(name=form.cat_name.data).first()
-        if category is None:
-            category = Category(name=form.cat_name.data)
-            db.session.add(category)
-            db.session.commit()
-        name = form.cat_name.data
-        form.cat_name.data = ''
-        flash('Category Added Successfully!')
-    all_categories = Category.query.order_by(Category.section_id)
-    return render_template('add_category.html', 
-                           form=form, 
-                           name=name, 
-                           all_categories=all_categories)
 
-# Show the Posts
+
+
+# Show the Categories and Products on the Manager Dashboard
 @app.route('/manager_dashboard')
 def manager_dashboard():
     # Grab all the posts from the database
@@ -313,7 +306,8 @@ def manager_dashboard():
                            prod_count=prod_count, 
                            products_by_category=products_by_category)
 
-# Show the Posts
+
+# Show the Categories and Products on the User Dashboard
 @app.route('/user_dashboard')
 def user_dashboard():
     # Grab all the categories from the database
@@ -330,3 +324,139 @@ def user_dashboard():
     return render_template('user_dashboard.html', products_by_category=products_by_category, categories=categories)
 
 
+# Add Category
+@app.route('/manager/add_category', methods=['GET', 'POST'])
+def add_category():
+    name = None
+    form = CategoryForm()
+    if form.validate_on_submit():
+        category = Category.query.filter_by(name=form.cat_name.data).first()
+        if category is None:
+            category = Category(name=form.cat_name.data)
+            db.session.add(category)
+            db.session.commit()
+        name = form.cat_name.data
+        form.cat_name.data = ''
+        flash('Category Added Successfully!')
+    all_categories = Category.query.order_by(Category.section_id)
+    return render_template('add_category.html', 
+                           form=form, 
+                           name=name, 
+                           all_categories=all_categories)
+
+
+# Update Database Record in Category
+@app.route('/update_category/<int:section_id>', methods=['GET', 'POST'])
+def update_category(section_id):
+    category_to_update = Category.query.get_or_404(section_id)
+    form = CategoryForm()
+
+    if form.validate_on_submit():
+        category_to_update.name = form.category_name.data
+
+        # Update the Database
+        db.session.add(category_to_update)
+        db.session.commit()
+
+        flash("Category Information Has Been Updated!")
+        return redirect(url_for('manager_dashboard', section_id=section_id))
+    
+    form.category_name.data = category_to_update.name
+
+    return render_template('add_category.html', form=form)
+
+
+# Delete a Category from the Database Record
+@app.route('/delete_category/<int:section_id>')
+def delete_category(section_id):
+    category_to_delete = Category.query.get_or_404(section_id)
+
+    try: 
+        db.session.delete(category_to_delete)
+        db.session.commit()
+        flash("Category Deleted Successfully!")
+
+        return redirect(url_for('manager_dashboard'))
+
+    except: 
+        flash("Woops! There was a problem deleting the category. Please try again...")
+        return redirect(url_for('manager_dashboard'))
+
+
+
+# Add a Product to the Database
+@app.route('/<int:section_id>/add_product', methods=['GET', 'POST'])
+def add_product(section_id):
+    form = ProductForm()
+    category_name = Category.query.get_or_404(section_id).name
+    if form.validate_on_submit():
+        # Here, you can save the product details to the database
+        product = Product(
+            name=form.product_name.data,
+            rate_per_unit=form.rate.data,
+            stock=form.stock.data,
+            unit=form.unit.data, 
+            manufacture_date = datetime.today().strftime('%Y-%m-%d'), 
+            section_id = section_id
+        )
+
+        db.session.add(product)
+        db.session.commit()
+
+        form.product_name.data = ''
+        form.rate.data = ''
+        form.stock.data = ''
+        form.unit.data = ''
+
+        flash('Product Added Successfully!')
+        return redirect(url_for('manager_dashboard'))
+
+    return render_template('add_product.html', 
+                           form=form, 
+                           section_id=section_id, 
+                           category_name=category_name)
+
+
+# Update Database Record in Product
+@app.route('/update_product/<int:product_id>', methods=['GET', 'POST'])
+def update_product(product_id):
+    product_to_update = Product.query.get_or_404(product_id)
+    form = ProductForm()
+
+    if form.validate_on_submit():
+        product_to_update.name = form.product_name.data
+        product_to_update.rate_per_unit = form.rate.data
+        product_to_update.unit = form.unit.data
+        product_to_update.stock = form.stock.data
+
+        # Update the Database
+        db.session.add(product_to_update)
+        db.session.commit()
+
+        flash("Product Information Has Been Updated!")
+        return redirect(url_for('manager_dashboard', product_id=product_id))
+    
+    form.product_name.data = product_to_update.name
+    form.rate.data = product_to_update.rate_per_unit
+    form.unit.data = product_to_update.unit
+    form.stock.data = product_to_update.stock
+
+    return render_template('add_product.html', form=form)
+
+
+
+# Delete a Product from the Database Record
+@app.route('/delete_product/<int:product_id>')
+def delete_product(product_id):
+    product_to_delete = Product.query.get_or_404(product_id)
+
+    try: 
+        db.session.delete(product_to_delete)
+        db.session.commit()
+        flash("Product Deleted Successfully!")
+
+        return redirect(url_for('manager_dashboard'))
+
+    except: 
+        flash("Woops! There was a problem deleting the product. Please try again...")
+        return redirect(url_for('manager_dashboard'))

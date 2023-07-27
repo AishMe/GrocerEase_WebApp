@@ -59,18 +59,18 @@
                 <div class="card-body">
                   <center><h5 class="card-title" style="color: black">{{ product.name.capitalize() }}</h5></center>
                   <hr style="margin-top: 1rem; border: 1px solid black;"/>
-                  <p class="card-text">Manufacture Date: {{ product.manufacture_date }}<br/>
-                    Expiry Date: {{ product.expiry_date }}<br/>
-                    Rate per unit: Rs.{{ product.rate_per_unit }}
+                  <p class="card-text">Manufacturing Date: {{ product.manufacture_date }}<br/>
+                    Rate per unit: Rs.{{ product.rate_per_unit }}/{{ product.unit }}<br/>
+                    Stock: {{ product.stock }}
                   </p>
                   <!-- Add a line break above the buttons -->
                   <hr style="margin-top: 1rem; border: 1px solid black;">
 
                   <!-- Add the buttons at the center (horizontally and vertically) -->
                   <div class="d-flex justify-content-center align-items-center">
-                    <a href="{{ url_for('add_user', user_id=user_id) }}"><button class="btn btn-outline-warning"><i class="fa fa-pencil"></i>Edit</button></a>
+                    <a href="{{ url_for('update_product', product_id=product.product_id) }}"><button class="btn btn-outline-warning"><i class="fa fa-pencil"></i>Edit</button></a>
                     <span style="flex-grow: 0.5;"></span>
-                    <a href="{{ url_for('add_user', user_id=user_id) }}"><button class="btn btn-outline-danger"><i class="fa fa-trash"></i>Delete</button></a>
+                    <a href="{{ url_for('delete_product', product_id=product.product_id) }}"><button class="btn btn-outline-danger"><i class="fa fa-trash"></i>Delete</button></a>
                   </div>
                 </div>
               </div>
@@ -79,11 +79,11 @@
           <div>
             <br/>
           <div class="d-flex justify-content-between">
-            <a href="{{ url_for('add_user', user_id=user_id) }}"><button class="btn btn-outline-primary"><i class="fa fa-plus-circle"></i>Add Items</button></a>
+            <a href="{{ url_for('add_product', section_id=category.section_id) }}"><button class="btn btn-outline-primary"><i class="fa fa-plus-circle"></i>Add Items</button></a>
             <span style="flex-grow: 1;"></span>
-            <a href="{{ url_for('add_user', user_id=user_id) }}"><button class="btn btn-outline-warning"><i class="fa fa-pencil"></i></button></a>
+            <a href="{{ url_for('update_category', section_id=category.section_id) }}"><button class="btn btn-outline-warning"><i class="fa fa-pencil"></i></button></a>
             <span style="flex-grow: 0.3;"></span>
-            <a href="{{ url_for('add_user', user_id=user_id) }}"><button class="btn btn-outline-danger"><i class="fa fa-trash"></i></button></a>
+            <a href="{{ url_for('delete_category', section_id=category.section_id) }}"><button class="btn btn-outline-danger"><i class="fa fa-trash"></i></button></a>
           </div>
           </div>
         </div>
