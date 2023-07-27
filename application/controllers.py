@@ -7,10 +7,21 @@ from wtforms import StringField, SubmitField, PasswordField, BooleanField, Valid
 from wtforms.validators import DataRequired, EqualTo, Length
 from wtforms.widgets import TextArea
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 
 
 app.config['SECRET_KEY'] = "harekrishna"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.sqlite3'
+
+
+# Flask-Login Stuffs
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def login_user(user_id):
+    return User.query.get(user_id)
 
 # Create a Posts Form
 class PostForm(FlaskForm):
@@ -23,6 +34,7 @@ class PostForm(FlaskForm):
 # Create a Form Class
 class UserForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
+    username = StringField("Username", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired()])
     password_hash = PasswordField("Password", validators=[DataRequired(), EqualTo('password_hash_confirm', message='Both Passwords must Match!')])
     password_hash_confirm = PasswordField("Confirm Password", validators=[DataRequired()])
@@ -39,6 +51,13 @@ class PasswordForm(FlaskForm):
 # Create a Namer Form
 class NamerForm(FlaskForm):
     name = StringField("What's your name?", validators=[DataRequired()])
+    submit = SubmitField("Submit")
+
+
+# Create a Login Form
+class LoginForm(FlaskForm):
+    username = StringField("Username", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
 
@@ -67,27 +86,6 @@ def fav_pizzas_list():
 @app.route('/')
 def index():
     return render_template('index.html')
-
-
-@app.route('/manager_login', methods=['GET', 'POST'])
-def manager_login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        # Check if username exists in the database
-        user = User.query.filter_by(username=username, role='Manager').first()
-        if not user:
-            return "Please try again. Username not found!"
-        
-        # Check if password matches
-        if user.password != password:
-            return "Please try again. Password is wrong!"
-
-        # Successful login, redirect to manager dashboard
-        return redirect('/manager_dashboard')
-
-    return render_template('manager_login.html')
 
 
 @app.route('/user_login', methods=['GET', 'POST'])
@@ -131,34 +129,6 @@ def user_register():
         return redirect('/user_login')
 
     return render_template('user_register.html')
-
-
-@app.route('/manager_dashboard')
-def manager_dashboard():
-    # Fetch manager's name from the database
-    manager_username = "manager1"  # Replace with the logged-in manager's username
-    manager = User.query.filter_by(username=manager_username, role='Manager').first()
-
-    if manager:
-        manager_name = manager.name
-    else:
-        manager_name = "Unknown Manager"
-
-    return render_template('manager_dashboard.html', name=manager_name)
-
-
-@app.route('/user_dashboard')
-def user_dashboard():
-    # Fetch user's name from the database
-    user_username = "user1"  # Replace with the logged-in user's username
-    user = User.query.filter_by(username=user_username, role='User').first()
-
-    if user:
-        user_name = user.name
-    else:
-        user_name = "Unknown User"
-
-    return render_template('user_dashboard.html', name=user_name)
 
 
 # Create Custom Error Pages
@@ -233,11 +203,12 @@ def add_user():
         user = User.query.filter_by(email=form.email.data).first()
         if user is None:
             hashed_pw = generate_password_hash(form.password_hash.data, "sha256")
-            user = User(name=form.name.data, email=form.email.data, password_hash=hashed_pw)
+            user = User(username=form.username.data, name=form.name.data, email=form.email.data, password_hash=hashed_pw)
             db.session.add(user)
             db.session.commit()
         name = form.name.data
         form.name.data = ''
+        form.username.data = ''
         form.email.data = ''
         form.password_hash.data = ''
         flash('User Added Successfully!')
@@ -389,3 +360,31 @@ def delete_post(id):
         # Grab all the posts from the database
         posts = Posts.query.order_by(Posts.date_posted)
         return render_template('posts.html', posts=posts)
+    
+# Create Login Page
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user:
+            # Check the Hash
+            if check_password_hash(user.password_hash, form.password.data):
+                login_user(user)
+                flash("Login Successful!!")
+                return redirect(url_for('dashboard'))
+            
+            else:
+                flash('Oops..Wrong Password! Try Again...')
+
+        else:
+            flash("That User Doesn't Exist, Try Again...")
+    return render_template('login.html', form=form)
+
+# Create Dashboard Page
+@app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
+def dashboard():
+    return render_template('dashboard.html')
+
+

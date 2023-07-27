@@ -1,8 +1,10 @@
 from .database import db
 from datetime import datetime
+from flask_login import UserMixin
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(20), nullable=False, unique=True)
     name = db.Column(db.Text, nullable=False)
     username = db.Column(db.Text, unique=True, nullable=False)
     #password = db.Column(db.Text, nullable=False)

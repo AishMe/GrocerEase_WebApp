@@ -56,6 +56,13 @@
                             class="form-control") }}
                         <br/>
 
+                        {{ form.username.label(
+                            class="form-label") }}
+
+                        {{ form.username(
+                            class="form-control") }}
+                        <br/>
+
                         {{ form.email.label(
                             class="form-label") }}
 
@@ -93,6 +100,7 @@
         <tr>
           <th scope="col">ID</th>
           <th scope="col">Name</th>
+          <th scope="col">Username</th>
           <th scope="col">Email</th>
         </tr>
     </thead>
@@ -103,6 +111,7 @@
         <tr>
           <th scope="row">{{ user.user_id }}</th>
           <td><a href="{{ url_for('update', user_id=user.user_id) }}">{{ user.name }}</a></td>
+          <td>{{ user.username }}</td>
           <td>{{ user.email }}</td>
         </tr>
 

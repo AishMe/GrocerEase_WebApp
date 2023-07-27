@@ -1,3 +1,5 @@
 flask
+flask-login
 Flask-SQLAlchemy
 flask-restful
+flask_wtf
