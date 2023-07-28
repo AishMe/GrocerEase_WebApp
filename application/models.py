@@ -5,6 +5,7 @@ class User(db.Model):
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.Text, nullable=False)
     username = db.Column(db.Text, unique=True, nullable=False)
+    is_manager = db.Column(db.Integer, default=0)
     #password = db.Column(db.Text, nullable=False)
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
     email = db.Column(db.Text, nullable=False)

@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, render_template, url_for, flash
+from flask import Flask, session, request, redirect, render_template, url_for, flash
 from flask import current_app as app
 from .database import db
 from application.models import User, Category, Product
@@ -50,6 +50,26 @@ class NamerForm(FlaskForm):
     submit = SubmitField("Submit")
 
 
+
+def login_required(role):
+    def decorator(f):
+        def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                return redirect(url_for(f'{role}_login', next=request.url))
+            user_id = session['user_id']
+            user = User.query.get(user_id)
+            if not user or (role == 'user' and user.is_manager) or (role == 'manager' and not user.is_manager):
+                return redirect(url_for(f'{role}_login', next=request.url))
+            return f(*args, **kwargs)
+        
+        # Set a unique endpoint name based on the function name and role
+        decorated_function.__name__ = f'{f.__name__}_{role}'
+        return decorated_function
+    
+    return decorator
+
+
+
 # Password Hashing Stuffs
 @property
 def password(self):
@@ -76,7 +96,7 @@ def fav_pizzas_list():
 def index():
     return render_template('index.html')
 
-
+'''
 @app.route('/manager_login', methods=['GET', 'POST'])
 def manager_login():
     if request.method == 'POST':
@@ -118,6 +138,7 @@ def user_login():
 
     return render_template('user_login.html')
 
+'''
 
 @app.route('/user_register', methods=['GET', 'POST'])
 def user_register():
@@ -286,7 +307,8 @@ def delete(user_id):
 
 
 # Show the Categories and Products on the Manager Dashboard
-@app.route('/manager_dashboard')
+@app.route('/manager_dashboard', endpoint='manager_dashboard')
+@login_required(role='manager')
 def manager_dashboard():
     # Grab all the posts from the database
     prod_count = Product.query.count()
@@ -308,7 +330,8 @@ def manager_dashboard():
 
 
 # Show the Categories and Products on the User Dashboard
-@app.route('/user_dashboard')
+@app.route('/user_dashboard', endpoint='user_dashboard')
+@login_required(role='user')
 def user_dashboard():
     # Grab all the categories from the database
     categories = Category.query.order_by(Category.section_id).all()
@@ -460,3 +483,109 @@ def delete_product(product_id):
     except: 
         flash("Woops! There was a problem deleting the product. Please try again...")
         return redirect(url_for('manager_dashboard'))
+
+
+
+
+
+@app.route('/user/login', methods=['GET', 'POST'])
+def user_login():
+    form = PasswordForm()
+
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password_hash.data
+        form.email.data = ''
+        form.password_hash.data = ''
+
+        user = User.query.filter_by(email=email, is_manager=0).first()
+
+        if user and check_password_hash(user.password_hash, password):
+            session['user_id'] = user.user_id
+            return redirect(url_for('user_dashboard'))
+        else:
+            flash('Invalid email or password', 'error')
+
+    return render_template('user_login.html', form=form)
+
+
+@app.route('/manager/login', methods=['GET', 'POST'])
+def manager_login():
+    form = PasswordForm()
+
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password_hash.data
+        form.email.data = ''
+        form.password_hash.data = ''
+
+        manager = User.query.filter_by(email=email, is_manager=1).first()
+
+        if manager and check_password_hash(manager.password_hash, password):
+            session['user_id'] = manager.user_id
+            flash("You Are Logged In As Manager!!")
+            return redirect(url_for('manager_dashboard'))
+        else:
+            flash('Invalid email or password', 'error')
+
+    return render_template('manager_login.html', form=form)
+
+
+@app.route('/manager')
+def manager_page():
+    if 'user_id' in session:
+        user_id = session['user_id']
+        manager = User.query.get(user_id)
+        if manager and manager.is_manager:
+            return render_template('manager.html', manager=manager)
+    return redirect(url_for('manager_login'))
+
+
+@app.route('/user')
+def user_page():
+    if 'user_id' in session:
+        user_id = session['user_id']
+        user = User.query.get(user_id)
+        if user and not user.is_manager:
+            return render_template('user.html', user=user)
+    return redirect(url_for('user_login'))
+
+
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('index'))
+
+
+'''
+def test_pw():
+    email = None
+    password = None
+    pw_to_check = None
+    passed = None
+    form = PasswordForm()
+
+    # Validate Form
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password_hash.data
+        # Clear the Form
+        form.email.data = ''
+        form.password_hash.data = ''
+        #flash("Registration Successful!!")
+
+    pw_to_check = User.query.filter_by(email=email).first()
+
+    if pw_to_check is not None:
+        passed = check_password_hash(pw_to_check.password_hash, password)
+    else:
+    # Handle the case when the user doesn't exist
+        passed = False
+    
+    return render_template('test_pw.html', 
+                           email = email,
+                           password = password,  
+                           pw_to_check = pw_to_check, 
+                           passed = passed, 
+                           form = form)
+'''
