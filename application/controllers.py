@@ -82,6 +82,7 @@ def password(self, password):
 def verify_password(self, password):
     return check_password_hash(self.password_hash, password)
 
+
 # JSON Demo
 @app.route('/pizza')
 def fav_pizzas_list():
@@ -96,49 +97,6 @@ def fav_pizzas_list():
 def index():
     return render_template('index.html')
 
-'''
-@app.route('/manager_login', methods=['GET', 'POST'])
-def manager_login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        # Check if username exists in the database
-        user = User.query.filter_by(username=username, role='Manager').first()
-        if not user:
-            return "Please try again. Username not found!"
-        
-        # Check if password matches
-        if user.password != password:
-            return "Please try again. Password is wrong!"
-
-        # Successful login, redirect to manager dashboard
-        return redirect('/manager_dashboard')
-
-    return render_template('manager_login.html')
-
-
-@app.route('/user_login', methods=['GET', 'POST'])
-def user_login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        # Check if username exists in the database
-        user = User.query.filter_by(username=username, role='User').first()
-        if not user:
-            return "No such username exists. Register here"
-
-        # Check if password matches
-        if user.password != password:
-            return "The password entered is wrong. Please try again!"
-
-        # Successful login, redirect to user dashboard
-        return redirect('/user_dashboard')
-
-    return render_template('user_login.html')
-
-'''
 
 @app.route('/user_register', methods=['GET', 'POST'])
 def user_register():
@@ -556,36 +514,3 @@ def logout():
     session.pop('user_id', None)
     return redirect(url_for('index'))
 
-
-'''
-def test_pw():
-    email = None
-    password = None
-    pw_to_check = None
-    passed = None
-    form = PasswordForm()
-
-    # Validate Form
-    if form.validate_on_submit():
-        email = form.email.data
-        password = form.password_hash.data
-        # Clear the Form
-        form.email.data = ''
-        form.password_hash.data = ''
-        #flash("Registration Successful!!")
-
-    pw_to_check = User.query.filter_by(email=email).first()
-
-    if pw_to_check is not None:
-        passed = check_password_hash(pw_to_check.password_hash, password)
-    else:
-    # Handle the case when the user doesn't exist
-        passed = False
-    
-    return render_template('test_pw.html', 
-                           email = email,
-                           password = password,  
-                           pw_to_check = pw_to_check, 
-                           passed = passed, 
-                           form = form)
-'''
