@@ -1,12 +1,45 @@
-{% extends 'base.html' %}
-
-{% block content %}
-
-<div style="height: 700px; display: flex; justify-content: center; align-items: center;">
-    <div>
-      <h1 style="text-align: center;">500 - Internal Server Error</h1>
-      <h3 style="text-align: center;">Oops! Something Went Wrong. Please Try Again...</h3>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 Not Found</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #ffffff;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .big-text {
+            font-size: 5rem;
+            font-weight: bold;
+        }
+        .message {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <br/><br/>
+    <div class="container">
+        <div class="big-text">404</div>
+        <div class="message">Looks like you are lost!</div>
+        <a href="{{ url_for('index') }}"><button type="button" class="btn btn-primary">Go Home</button></a>
+        <!-- Replace the URL below with the path to your GIF or image -->
+        <img src="https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/6297caa8-dd7b-44b7-8b89-12a2e8b3cdc1/de8nau9-1c352b25-e740-4717-87bf-869074812f17.gif?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzYyOTdjYWE4LWRkN2ItNDRiNy04Yjg5LTEyYTJlOGIzY2RjMVwvZGU4bmF1OS0xYzM1MmIyNS1lNzQwLTQ3MTctODdiZi04NjkwNzQ4MTJmMTcuZ2lmIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.c-sQlWsB8UoTSP0M3ycNGlSewsTZF4LbX3nvfaDLjk4" alt="404 Not Found" style="max-width: 100%; height: auto;">
+        
     </div>
-</div>
-
-{% endblock %}
+</body>
+</html>

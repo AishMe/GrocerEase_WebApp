@@ -15,6 +15,7 @@ class User(db.Model):
 class Category(db.Model):
     section_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.Text, nullable=False)
+    image = db.Column(db.Text)
 
 class Product(db.Model):
     product_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -26,7 +27,17 @@ class Product(db.Model):
     section_id = db.Column(db.Integer, db.ForeignKey('category.section_id'), nullable=False)
 
 class Cart(db.Model):
-    cart_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
-    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'))
-    quantity = db.Column(db.Integer)
+    cart_id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
+    section_id = db.Column(db.Integer, db.ForeignKey('category.section_id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+
+class Orders(db.Model):
+    quantity = db.Column(db.Integer, nullable=False)
+    order_number = db.Column(db.Integer, nullable=False)
+    order_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    cart_id = db.Column(db.Integer, db.ForeignKey('cart.cart_id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
+    section_id = db.Column(db.Integer, db.ForeignKey('category.section_id'), nullable=False)

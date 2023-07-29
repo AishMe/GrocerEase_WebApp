@@ -1,7 +1,7 @@
 from flask import Flask, session, request, redirect, render_template, url_for, flash
 from flask import current_app as app
 from .database import db
-from application.models import User, Category, Product
+from application.models import User, Category, Product, Cart, Orders
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
 from wtforms.validators import DataRequired, EqualTo, Length
@@ -47,6 +47,12 @@ class ProductForm(FlaskForm):
 # Create a Namer Form
 class NamerForm(FlaskForm):
     name = StringField("What's your name?", validators=[DataRequired()])
+    submit = SubmitField("Submit")
+
+
+# Create a Cart Form
+class AddToCartForm(FlaskForm):
+    quantity = StringField("Quantity", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
 
@@ -288,7 +294,7 @@ def manager_dashboard():
 
 
 # Show the Categories and Products on the User Dashboard
-@app.route('/user_dashboard', endpoint='user_dashboard')
+@app.route('/user_dashboard', methods=['GET', 'POST'], endpoint='user_dashboard')
 @login_required(role='user')
 def user_dashboard():
     # Grab all the categories from the database
@@ -377,7 +383,7 @@ def add_product(section_id):
             rate_per_unit=form.rate.data,
             stock=form.stock.data,
             unit=form.unit.data, 
-            manufacture_date = datetime.today().strftime('%Y-%m-%d'), 
+            manufacture_date = datetime.today().strftime('%d-%m-%y'), 
             section_id = section_id
         )
 
@@ -513,4 +519,188 @@ def user_page():
 def logout():
     session.pop('user_id', None)
     return redirect(url_for('index'))
+
+'''
+@app.route('/add_to_cart', methods=['POST'])
+def add_to_cart():
+    product_name = request.form.get('product_name')
+    quantity = int(request.form.get('quantity'))
+
+    # Save the cart item to the database
+    cart_item = CartItem(product_name=product_name, quantity=quantity)
+    db.session.add(cart_item)
+    db.session.commit()
+
+    flash("Item added to Cart Successfully", "success")
+    return redirect(url_for('user_dashboard'))
+
+@app.route('/buy_item', methods=['POST'])
+def buy_item():
+    product_name = request.form.get('product_name')
+    quantity = int(request.form.get('quantity'))
+
+    # Create a new purchase item
+    purchase_item = PurchaseItem(product_name=product_name, quantity=quantity)
+    db.session.add(purchase_item)
+    db.session.commit()
+
+    flash("Item bought Successfully", "success")
+    return redirect(url_for('user_dashboard'))
+'''
+
+
+@app.route('/cart', endpoint='cart')
+@login_required('user')
+def cart():
+    current_user_id = session['user_id']
+
+    # Fetch cart items specific to the current user and perform a join with Product and Category tables
+    cart_items = db.session.query(Cart, Product, Category).join(Product, Cart.product_id == Product.product_id).join(Category, Product.section_id == Category.section_id).filter(Cart.user_id == current_user_id).all()
+
+    # Create a list to store cart item details
+    cart_data = []
+
+    # Calculate total price for each cart item and store in cart_data list
+    for cart, product, category in cart_items:
+        total_price = product.rate_per_unit * cart.quantity
+        cart_data.append({
+            'product_name': product.name,
+            'category_name': category.name,
+            'quantity': cart.quantity,
+            'rate_per_unit': product.rate_per_unit,
+            'total_price': total_price,
+            'image': category.image
+        })
+
+    # Calculate overall total price
+    total_price = sum(item['total_price'] for item in cart_data)
+
+    return render_template('cart.html', cart_data=cart_data, total_price=total_price)
+
+
+
+@app.route('/checkout', endpoint='checkout')
+@login_required('user')
+def checkout():
+    user_id = session['user_id']
+
+    # Get all cart items for the current user
+    cart_items = Cart.query.filter_by(user_id=user_id).all()
+
+    # If the cart is empty, show a flash message and redirect to the cart page
+    if not cart_items:
+        flash('Your cart is empty. Add items to proceed with the checkout.', 'warning')
+        return redirect(url_for('cart'))
+
+    # Get the maximum order number for the current user
+    max_order_number = Orders.query.filter_by(user_id=user_id).order_by(Orders.order_number.desc()).first()
+
+    # Calculate the current_order_number
+    if max_order_number:
+        current_order_number = max_order_number.order_number + 1
+    else:
+        current_order_number = 1
+
+    # Create new order records for each cart item
+    for cart_item in cart_items:
+        product = Product.query.get(cart_item.product_id)
+
+        # Create a new order record
+        order = Orders(
+            order_number=current_order_number,
+            user_id=user_id,
+            cart_id=cart_item.cart_id,
+            quantity=cart_item.quantity,
+            product_id=cart_item.product_id,
+            section_id=product.section_id
+        )
+
+        # Add the order to the database
+        db.session.add(order)
+
+    # Delete all cart items for the current user
+    Cart.query.filter_by(user_id=user_id).delete()
+
+    # Commit the changes to the database
+    db.session.commit()
+
+    # Show a flash message and redirect to the orders page
+    flash('Purchase Successful! View History.', 'success')
+    return redirect(url_for('orders'))
+
+
+
+@app.route('/orders', endpoint='orders')
+@login_required('user')
+def orders():
+    user_id = session['user_id']
+
+    # Get all orders for the current user
+    orders = Orders.query.filter_by(user_id=user_id).all()
+
+    # Create a dictionary to store order details
+    order_details = {}
+
+    for order in orders:
+        # Get the product and category details for each order
+        product = Product.query.get(order.product_id)
+        category = Category.query.get(product.section_id)
+
+        # Create a tuple with product and category details
+        order_info = (product.name, category.name, order.quantity, product.rate_per_unit, (order.quantity * product.rate_per_unit))
+
+        # If the order_number already exists in the dictionary, append the order_info to the existing list
+        if order.order_number in order_details:
+            order_details[order.order_number].append(order_info)
+        else:
+            # If the order_number doesn't exist, create a new list with order_info
+            order_details[order.order_number] = [order_info]
+
+    return render_template('orders.html', orders=order_details)
+
+
+@app.route('/add_to_cart_or_purchase', methods=['POST'], endpoint='add_to_cart_or_purchase')
+@login_required('user')
+def add_to_cart_or_purchase():
+    user_id = session['user_id']
+    product_ids = request.form.getlist('product_id')
+    section_ids = request.form.getlist('section_id')
+    quantity = request.form.get('quantity')
+    action = request.form.get('action')
+
+    for product_id, section_id in zip(product_ids, section_ids):
+        if action == 'cart':
+            # Create a new cart item record
+            cart_item = Cart(
+                user_id=user_id,
+                product_id=product_id,
+                section_id=section_id,
+                quantity=quantity
+            )
+
+            # Add the cart item to the database
+            db.session.add(cart_item)
+
+        elif action == 'purchase':
+            # Create a new order record
+            order = Orders(
+                user_id=user_id,
+                product_id=product_id,
+                section_id=section_id,
+                quantity=quantity,
+                order_number=Orders.query.filter_by(user_id=user_id).count() + 1
+            )
+
+            # Add the order to the database
+            db.session.add(order)
+
+    # Commit the changes to the database
+    db.session.commit()
+
+    if action == 'cart':
+        flash('Item Added to Cart Successfully!', 'success')
+        return redirect(url_for('user_dashboard'))
+    elif action == 'purchase':
+        flash('Successfully Purchased!', 'success')
+        return redirect(url_for('orders'))
 

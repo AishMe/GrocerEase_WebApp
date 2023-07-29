@@ -19,13 +19,13 @@
     <section id="banner">
       <div class="wrapper">
           <header>
-              <p id="logo">Grocer<span style="color: white;">Ease</span></p>
+            <a id="logo" href="{{ url_for('index') }}" style="text-decoration: none;">Grocer<span style="color: white;">Ease</span></a>
 
               <nav>
-                  <a href="#"">Home</a>
-                  <a href="#">Portfolio</a>
-                  <a href="#">Services</a>
-                  <a href="#">Get in touch</a>
+                  <a href="{{ url_for('cart') }}">Cart</a>
+                  <a href="{{ url_for('orders') }}">Orders</a>
+                  <a href="#">Profile</a>
+                  <a href="{{ url_for('logout') }}">Logout</a>
               </nav>
           </header>
 
@@ -43,7 +43,7 @@
   <div class="container py-4">
     <div id="carouselExampleControls{{ loop.index }}" class="card carousel slide bg-light shadow p-3 mb-5 bg-body-tertiary rounded">
       <br/>
-      <center><h1 style="color: black;">{{ category.name }}</h1></center>
+      <center><h1 style="color: black; font-weight: 700;">{{ category.name }}</h1></center>
       <hr/>
       <br/>
       <div class="carousel-inner">
@@ -53,26 +53,29 @@
             <div class="carousel-item {% if loop.index0 == 0 %}active{% endif %}">
               <div class="cards-wrapper">
           {% endif %}
-          <div class="card" style="width: 18rem;">
-            <img src="https://w.forfun.com/fetch/2e/2e0e582530e34a1a196bdcb75140be15.jpeg" class="card-img-top" alt="...">
+          <div class="card shadow p-3 mb-5 bg-body-tertiary rounded" style="width: 18rem;">
+            <img src="{{ category.image }}" class="card-img-top" alt="...">
             <div class="card-body">
               <h5 class="card-title" style="color: black">{{ product.name }}</h5>
               <h6 class="card-text" style="color: black">Vendor</h6>
-              <p class="card-text">Manufacture Date: {{ product.manufacture_date }}<br/>
-                Expiry Date: {{ product.expiry_date }}<br/>
-                Rate per unit: Rs.{{ product.rate_per_unit }}
+              <p class="card-text">Manufacturing Date: {{ product.manufacture_date }}<br/>
+                Rate per unit: Rs.{{ product.rate_per_unit }}/{{ product.unit }}<br/>
+                Stock: {{ product.stock }}
               </p>
               <!-- Add other product information as needed -->
 
-              <div class="row align-items-center">
-                <div class="col-md-6">
-                  <input type="number" class="form-control" placeholder="Qtn(kg)" min="0" max="5" required>
-                </div>
-                <div class="col-md-6 text-end">
-                  <a href="https://www.google.com"><button class="btn btn-outline-primary"><i class="fa fa-shopping-cart"></i></button></a>
-                  <a href="https://www.google.com"><button class="btn btn-outline-success"><i class="fa fa-shopping-bag"></i></button></a>
-                </div>
-              </div>
+              <div class="row align-items-center justify-content-center">
+                <form action="{{ url_for('add_to_cart_or_purchase') }}" method="POST">
+                    <div class="input-group">
+                        <input type="hidden" name="product_id" value="{{ product.product_id }}">
+                        <input type="hidden" name="section_id" value="{{ product.section_id }}">
+                        <input type="number" class="form-control" name="quantity" placeholder="Qtn(kg)" min="0" max="5" required>
+                        <button type="submit" class="btn btn-outline-primary" name="action" value="cart" data-product-id="{{ product.product_id }}" data-section-id="{{ product.section_id }}"><i class="fa fa-shopping-cart"></i></button>
+                        <button type="submit" class="btn btn-outline-success" name="action" value="purchase" data-product-id="{{ product.product_id }}" data-section-id="{{ product.section_id }}"><i class="fa fa-shopping-bag"></i></button>
+                    </div>
+                </form>
+            </div>
+            
             </div>
           </div>
           {% if loop.index0 % 4 == 3 or loop.last %}
@@ -96,6 +99,12 @@
   <br/>
 {% endfor %}
 
+
+<footer>
+  <div style="background-image: url('https://muffingroup.com/blog/wp-content/uploads/2021/03/gr.jpg');">
+  <p>© 2023 Fresh Basket. All Rights Reserved.</p>
+  </div>
+</footer>
     
 
   <!-- Option 1: Bootstrap Bundle with Popper -->

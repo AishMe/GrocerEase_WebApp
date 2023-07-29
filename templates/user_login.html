@@ -12,28 +12,17 @@
 
 {% endfor %}
 
-
-{% if email %}
-    <h1>You Entered:</h1><br/><br/>
-    <h3>Email: {{ email }}</h3>
-    <h3>Password: {{ password }}</h3>
-    <br/><br/>
-    <h3>I Found this Information About You:</h3><br/>
-    Name: {{ pw_to_check.name }}<br/>
-    Email: {{ pw_to_check.email }}<br/>
-    Password: {{ pw_to_check.password_hash }}<br/><br/><br/>
-    <h3>Passed: {{ passed }}</h3><br/>
-
-{% else %}
-    <center><h1>What's your Email and Password?</h1></center>
+    <br/><br/><br/><br/>
+    <center><h1 style="color: #f5f5f5;">User Login</h1></center>
     <br/><br/><br/>
 
     <div class="d-flex justify-content-center">
-        <div class="card" style="width: 400px;">
+        <div class="card" style="width: 400px; height: 420px;">
             <div class="card-body">
-                <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
+                <div class="shadow p-3 mb-5 bg-body-tertiary rounded" style="height: 370px; color: #f5f5f5;">
                     <form method=POST>
 
+                        <br/>
                         {{ form.hidden_tag() }}
 
                         {{ form.email.label(
@@ -60,6 +49,5 @@
 
     <br/><br/><br/>
 
-{% endif %}
 
 {% endblock %}
