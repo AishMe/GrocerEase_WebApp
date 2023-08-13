@@ -2,4 +2,5 @@ flask
 Flask-SQLAlchemy
 flask-restful
 flask-wtf
+matplotlib
 #flask-login

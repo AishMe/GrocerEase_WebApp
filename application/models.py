@@ -15,7 +15,7 @@ class User(db.Model):
 class Category(db.Model):
     section_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.Text, nullable=False)
-    image = db.Column(db.Text)
+    cat_image = db.Column(db.Text)
 
 class Product(db.Model):
     product_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -24,6 +24,7 @@ class Product(db.Model):
     rate_per_unit = db.Column(db.REAL, nullable=False)
     unit = db.Column(db.Text, nullable=False)
     stock = db.Column(db.REAL, nullable=False)
+    image = db.Column(db.Text)
     section_id = db.Column(db.Integer, db.ForeignKey('category.section_id'), nullable=False)
 
 class Cart(db.Model):
@@ -35,9 +36,11 @@ class Cart(db.Model):
 
 class Orders(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
+    total_price = db.Column(db.Float, nullable=False, default=0)
     order_number = db.Column(db.Integer, nullable=False)
     order_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     cart_id = db.Column(db.Integer, db.ForeignKey('cart.cart_id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
     section_id = db.Column(db.Integer, db.ForeignKey('category.section_id'), nullable=False)
+    order_date = db.Column(db.DateTime, default=datetime.utcnow)

@@ -22,11 +22,19 @@
                         <br/>
                         {{ form.hidden_tag() }}
 
-                        {{ form.category_name.label(
+                        {{ form.cat_name.label(
                             class="form-label") }}
 
-                        {{ form.category_name(
+                        {{ form.cat_name(
                             class="form-control") }}
+                        <br/>
+
+                        {{ form.cat_image.label(
+                            class="form-label") }}
+    
+                        {{ form.cat_image(
+                            class="form-control") }}
+
                         <br/><br/>
 
                             <center>{{ form.submit(class="btn btn-success d-grid col-5 mx-auto", value="Save") }}</center>

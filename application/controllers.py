@@ -3,14 +3,35 @@ from flask import current_app as app
 from .database import db
 from application.models import User, Category, Product, Cart, Orders
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
+from wtforms import StringField, FloatField, SelectField, SubmitField, PasswordField, BooleanField, ValidationError
 from wtforms.validators import DataRequired, EqualTo, Length
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from datetime import date
+import matplotlib as mpl
+mpl.use('agg')
+import matplotlib.pyplot as plt
+import io
+import base64
 
 
 app.config['SECRET_KEY'] = "harekrishna"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.sqlite3'
+
+# Create a Search Form
+class SearchForm(FlaskForm):
+    searched = StringField("Searched")
+    section_id = StringField("Section ID")  # Add this line
+    rate_sort = StringField("Rate Sorting")  # Add this line
+    submit = SubmitField("Submit")
+
+# Create a Filter Form
+class FilterForm(FlaskForm):
+    section_id = SelectField("Categories")
+    rate_min = FloatField("Min Rate per Unit")
+    rate_max = FloatField("Max Rate per Unit")
+    date_order = SelectField("Manufacturing Date Order", choices=[('asc', 'Ascending'), ('desc', 'Descending')])
+    submit = SubmitField("Apply Filter")
 
 
 # Create a User Form
@@ -31,7 +52,8 @@ class PasswordForm(FlaskForm):
 
 # Create a Category Form
 class CategoryForm(FlaskForm):
-    category_name = StringField("Enter the Category Name", validators=[DataRequired()])
+    cat_name = StringField("Enter the Category Name", validators=[DataRequired()])
+    cat_image = StringField("Category Image")
     submit = SubmitField("Submit")
 
 
@@ -41,6 +63,7 @@ class ProductForm(FlaskForm):
     rate = StringField("Rate", validators=[DataRequired()])
     stock = StringField("Stock", validators=[DataRequired()])
     unit = StringField("Unit", validators=[DataRequired()])
+    image = StringField("Image")
     submit = SubmitField("Submit")
 
 
@@ -88,16 +111,6 @@ def password(self, password):
 def verify_password(self, password):
     return check_password_hash(self.password_hash, password)
 
-
-# JSON Demo
-@app.route('/pizza')
-def fav_pizzas_list():
-    favorite_pizza = {
-        "Harry": "Peparoni", 
-        "Ammu": "Cheeze", 
-        "Ria": "Pinapple"
-    }
-    return favorite_pizza
 
 @app.route('/')
 def index():
@@ -274,6 +287,8 @@ def delete(user_id):
 @app.route('/manager_dashboard', endpoint='manager_dashboard')
 @login_required(role='manager')
 def manager_dashboard():
+
+    today = date.today()
     # Grab all the posts from the database
     prod_count = Product.query.count()
     categories = Category.query.order_by(Category.section_id).all()
@@ -290,6 +305,7 @@ def manager_dashboard():
                            products=products, 
                            categories=categories, 
                            prod_count=prod_count, 
+                           currentYear=today.year, 
                            products_by_category=products_by_category)
 
 
@@ -308,23 +324,38 @@ def user_dashboard():
         products = Product.query.filter_by(section_id=category.section_id).all()
         products_by_category[category.section_id] = products
 
-    return render_template('user_dashboard.html', products_by_category=products_by_category, categories=categories)
+    # Get the filter parameters from the query string
+    min_price = float(request.args.get('min_price', 0))
+    max_price = float(request.args.get('max_price', float('inf')))
 
+    # Filter products based on price range
+    filtered_products = {}
+    for category_id, products in products_by_category.items():
+        filtered_products[category_id] = [product for product in products if min_price <= product.rate_per_unit <= max_price]
+
+    return render_template('user_dashboard.html', filtered_products=filtered_products, categories=categories)
 
 # Add Category
 @app.route('/manager/add_category', methods=['GET', 'POST'])
 def add_category():
     name = None
     form = CategoryForm()
+
     if form.validate_on_submit():
         category = Category.query.filter_by(name=form.cat_name.data).first()
         if category is None:
-            category = Category(name=form.cat_name.data)
+            category = Category(name=form.cat_name.data, 
+                                cat_image=form.cat_image.data)
             db.session.add(category)
             db.session.commit()
         name = form.cat_name.data
+        cat_image = form.cat_image.data
         form.cat_name.data = ''
+        form.cat_image.data = ''
+
         flash('Category Added Successfully!')
+        return redirect(url_for('manager_dashboard'))
+
     all_categories = Category.query.order_by(Category.section_id)
     return render_template('add_category.html', 
                            form=form, 
@@ -339,7 +370,8 @@ def update_category(section_id):
     form = CategoryForm()
 
     if form.validate_on_submit():
-        category_to_update.name = form.category_name.data
+        category_to_update.name = form.cat_name.data
+        category_to_update.cat_image = form.cat_image.data
 
         # Update the Database
         db.session.add(category_to_update)
@@ -348,7 +380,8 @@ def update_category(section_id):
         flash("Category Information Has Been Updated!")
         return redirect(url_for('manager_dashboard', section_id=section_id))
     
-    form.category_name.data = category_to_update.name
+    form.cat_name.data = category_to_update.name
+    form.cat_image.data = category_to_update.cat_image
 
     return render_template('add_category.html', form=form)
 
@@ -376,6 +409,8 @@ def delete_category(section_id):
 def add_product(section_id):
     form = ProductForm()
     category_name = Category.query.get_or_404(section_id).name
+
+
     if form.validate_on_submit():
         # Here, you can save the product details to the database
         product = Product(
@@ -383,6 +418,7 @@ def add_product(section_id):
             rate_per_unit=form.rate.data,
             stock=form.stock.data,
             unit=form.unit.data, 
+            image=form.image.data,
             manufacture_date = datetime.today().strftime('%d-%m-%y'), 
             section_id = section_id
         )
@@ -394,6 +430,7 @@ def add_product(section_id):
         form.rate.data = ''
         form.stock.data = ''
         form.unit.data = ''
+        form.image.data = ''
 
         flash('Product Added Successfully!')
         return redirect(url_for('manager_dashboard'))
@@ -415,6 +452,7 @@ def update_product(product_id):
         product_to_update.rate_per_unit = form.rate.data
         product_to_update.unit = form.unit.data
         product_to_update.stock = form.stock.data
+        product_to_update.image = form.image.data
 
         # Update the Database
         db.session.add(product_to_update)
@@ -427,6 +465,7 @@ def update_product(product_id):
     form.rate.data = product_to_update.rate_per_unit
     form.unit.data = product_to_update.unit
     form.stock.data = product_to_update.stock
+    form.image.data = product_to_update.image
 
     return render_template('add_product.html', form=form)
 
@@ -466,6 +505,7 @@ def user_login():
 
         if user and check_password_hash(user.password_hash, password):
             session['user_id'] = user.user_id
+            flash("You Are Logged In As User!!")
             return redirect(url_for('user_dashboard'))
         else:
             flash('Invalid email or password', 'error')
@@ -569,7 +609,8 @@ def cart():
             'quantity': cart.quantity,
             'rate_per_unit': product.rate_per_unit,
             'total_price': total_price,
-            'image': category.image
+            'image': product.image, 
+            'cart_id': cart.cart_id
         })
 
     # Calculate overall total price
@@ -577,6 +618,21 @@ def cart():
 
     return render_template('cart.html', cart_data=cart_data, total_price=total_price)
 
+
+@app.route('/remove_from_cart', methods=['POST'], endpoint='remove_from_cart')
+@login_required('user')
+def remove_from_cart():
+    cart_id = request.form.get('cart_id')
+    cart_item = Cart.query.get(cart_id)
+
+    if cart_item:
+        db.session.delete(cart_item)
+        db.session.commit()
+        flash('Item removed from cart.', 'success')
+    else:
+        flash('Failed to remove item from cart.', 'danger')
+
+    return redirect(url_for('cart'))
 
 
 @app.route('/checkout', endpoint='checkout')
@@ -601,22 +657,39 @@ def checkout():
     else:
         current_order_number = 1
 
-    # Create new order records for each cart item
+    total_price = 0
+    # Create new order records for each cart item and calculate total_price
     for cart_item in cart_items:
         product = Product.query.get(cart_item.product_id)
 
-        # Create a new order record
-        order = Orders(
-            order_number=current_order_number,
-            user_id=user_id,
-            cart_id=cart_item.cart_id,
-            quantity=cart_item.quantity,
-            product_id=cart_item.product_id,
-            section_id=product.section_id
-        )
+        # Calculate total_price
+        total_price += product.rate_per_unit * cart_item.quantity
 
-        # Add the order to the database
-        db.session.add(order)
+    # Update stock values and create order records
+    for cart_item in cart_items:
+        product = Product.query.get(cart_item.product_id)
+        
+        # Ensure that the purchased quantity is not greater than the available stock
+        if cart_item.quantity <= product.stock:
+            # Create a new order record
+            order = Orders(
+                order_number=current_order_number,
+                user_id=user_id,
+                cart_id=cart_item.cart_id,
+                quantity=cart_item.quantity,
+                product_id=cart_item.product_id,
+                section_id=product.section_id, 
+                total_price=total_price
+            )
+
+            # Subtract the purchased quantity from the product's stock
+            product.stock -= cart_item.quantity
+
+            # Add the order to the database
+            db.session.add(order)
+
+            # Update the product's stock in the database
+            db.session.commit()
 
     # Delete all cart items for the current user
     Cart.query.filter_by(user_id=user_id).delete()
@@ -640,6 +713,7 @@ def orders():
 
     # Create a dictionary to store order details
     order_details = {}
+    order_total_prices = {}
 
     for order in orders:
         # Get the product and category details for each order
@@ -652,11 +726,15 @@ def orders():
         # If the order_number already exists in the dictionary, append the order_info to the existing list
         if order.order_number in order_details:
             order_details[order.order_number].append(order_info)
+
         else:
             # If the order_number doesn't exist, create a new list with order_info
             order_details[order.order_number] = [order_info]
 
-    return render_template('orders.html', orders=order_details)
+        order_total_prices[order.order_number] = order.total_price
+
+    return render_template('orders.html', orders=order_details, order_total_prices=order_total_prices)
+
 
 
 @app.route('/add_to_cart_or_purchase', methods=['POST'], endpoint='add_to_cart_or_purchase')
@@ -704,3 +782,285 @@ def add_to_cart_or_purchase():
         flash('Successfully Purchased!', 'success')
         return redirect(url_for('orders'))
 
+
+@app.route('/update_cart_item', methods=['POST'], endpoint='update_cart_item')
+@login_required('user')
+def update_cart_item():
+    user_id = session['user_id']
+    product_id = request.form.get('product_id')
+    quantity = request.form.get('quantity')
+
+    # Get the cart item for the current user and product
+    cart_item = Cart.query.filter_by(user_id=user_id, product_id=product_id).first()
+
+    if cart_item:
+        # Update the quantity of the cart item
+        cart_item.quantity = quantity
+        db.session.commit()
+
+        flash('Item quantity updated successfully!', 'success')
+    else:
+        flash('Cart item not found!', 'danger')
+
+    return redirect(url_for('cart'))
+
+
+@app.route('/delete_cart_item', methods=['POST'], endpoint='delete_cart_item')
+@login_required('user')
+def delete_cart_item():
+    user_id = session['user_id']
+    product_id = request.form.get('product_id')
+
+    # Get the cart item for the current user and product
+    cart_item = Cart.query.filter_by(user_id=user_id, product_id=product_id).first()
+
+    if cart_item:
+        # Delete the cart item from the database
+        db.session.delete(cart_item)
+        db.session.commit()
+
+        flash('Item deleted from cart successfully!', 'success')
+    else:
+        flash('Cart item not found!', 'danger')
+
+    return redirect(url_for('cart'))
+
+
+# ... (previous imports and code) ...
+
+@app.route('/manager/summary', endpoint='manager_summary')
+@login_required(role='manager')
+def manager_summary():
+    # Fetch additional data for the summary card
+    user_count = User.query.filter(User.is_manager == 0).count()
+    avg_money_spent = calculate_average_money_spent()
+    out_of_stock_count = calculate_out_of_stock_items()
+    least_of_stock = calculate_least_of_stock_items()
+
+    # Fetch data from the database
+    categories = Category.query.all()
+    category_names = [category.name for category in categories]
+    category_counts = []
+
+    for category in categories:
+        count = db.session.query(db.func.count(Product.product_id)).filter(Product.section_id == category.section_id).scalar()
+        category_counts.append(count)
+
+    # Create graphs
+    # Bar chart: Products by Category
+    plt.figure(figsize=(10, 5))
+    plt.bar(category_names, category_counts)
+    plt.xlabel('Category')
+    plt.ylabel('Number of Products')
+    plt.title('Products by Category')
+    bar_chart_image = get_image_base64()
+
+    # Pie chart: Top Selling Products
+    top_products = db.session.query(Product.name, db.func.sum(Orders.quantity).label('total_quantity')).\
+        join(Orders, Product.product_id == Orders.product_id).\
+        group_by(Product.name).order_by(db.desc('total_quantity')).limit(5).all()
+
+    top_product_names = [product[0] for product in top_products]
+    top_product_quantities = [product[1] for product in top_products]
+
+    plt.figure(figsize=(8, 8))
+    plt.pie(top_product_quantities, labels=top_product_names, autopct='%1.1f%%')
+    plt.title('Top Selling Products')
+    pie_chart_image = get_image_base64()
+
+    # Advanced: Correlation between Quantity and Price
+    products = Product.query.all()
+    quantities = [product.stock for product in products]
+    prices = [product.rate_per_unit for product in products]
+
+    plt.figure(figsize=(8, 6))
+    plt.scatter(quantities, prices, color='b', alpha=0.5)
+    plt.xlabel('Quantity in Stock')
+    plt.ylabel('Price per Unit ($)')
+    plt.title('Correlation between Quantity and Price')
+    plt.grid(True)
+    correlation_image = get_image_base64()
+
+    # Advanced: Sales Distribution by Category
+    sales_by_category = db.session.query(Category.name, db.func.sum(Orders.quantity * Product.rate_per_unit).label('total_sales')).\
+        join(Product, Category.section_id == Product.section_id).\
+        join(Orders, Product.product_id == Orders.product_id).\
+        group_by(Category.name).order_by(db.desc('total_sales')).all()
+
+    category_names = [category[0] for category in sales_by_category]
+    total_sales_per_category = [category[1] for category in sales_by_category]
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(category_names, total_sales_per_category)
+    plt.xlabel('Category')
+    plt.ylabel('Total Sales ($)')
+    plt.title('Sales Distribution by Category')
+    plt.xticks(rotation=45)
+    sales_distribution_image = get_image_base64()
+
+    # Item Distribution chart
+    # Fetch item distribution data from the database and create the chart
+    item_distribution_data = db.session.query(Product.name, Product.stock).all()
+    item_names = [item[0] for item in item_distribution_data]
+    item_quantities = [item[1] for item in item_distribution_data]
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(item_names, item_quantities)
+    plt.xlabel('Item')
+    plt.ylabel('Quantity in Stock')
+    plt.title('Item Distribution')
+    plt.xticks(rotation=45)
+    item_distribution_image = get_image_base64()
+
+    return render_template('summary.html',
+                           correlation_image=correlation_image,
+                           sales_distribution_image=sales_distribution_image,
+                           bar_chart_image=bar_chart_image,
+                           pie_chart_image=pie_chart_image,
+                           item_distribution_image=item_distribution_image,
+                           user_count=user_count,
+                           avg_money_spent=avg_money_spent,
+                           out_of_stock_count=out_of_stock_count,
+                           least_of_stock=least_of_stock)
+
+
+def calculate_average_money_spent():
+    # Calculate the average money spent per user (excluding managers)
+    subquery = db.session.query(db.func.sum(Orders.total_price).label('total_spent')).\
+        join(User, User.user_id == Orders.user_id).\
+        filter(User.is_manager == 0).\
+        group_by(Orders.user_id).subquery()
+
+    average_money_spent = db.session.query(db.func.avg(subquery.c.total_spent)).scalar()
+
+    return round(average_money_spent, 2)
+
+
+def calculate_out_of_stock_items():
+    # Find products that are out of stock
+    out_of_stock_products = Product.query.filter(Product.stock == 0).all()
+    out_of_stock_item_names = [product.name for product in out_of_stock_products]
+    return len(out_of_stock_item_names)
+
+
+def calculate_least_of_stock_items():
+    # Get the least in stock products
+    least_of_stock = db.session.query(Product, Category, Product.stock).\
+        join(Category, Product.section_id == Category.section_id).\
+        order_by(Product.stock).filter(Product.stock <= 200).all()
+
+    return least_of_stock
+
+def get_image_base64():
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    plt.close()
+    buffer.seek(0)
+    image_base64 = base64.b64encode(buffer.read()).decode()
+    return image_base64
+
+
+
+@app.route('/profile')
+def profile():
+    return render_template('profile.html')
+
+@app.context_processor
+def base():
+    form = SearchForm()
+    return dict(form=form)
+
+
+@app.route('/manager_search', methods=['GET', 'POST'])
+def manager_search():
+    form = SearchForm()
+    sections = Category.query.all()
+
+    if request.method == 'POST' and form.validate_on_submit():
+        products_searched = form.searched.data
+        products = Product.query.filter(Product.name.like('%' + products_searched + '%')).all()
+    else:
+        products_searched = None
+        products = Product.query.all()
+
+    return render_template('manager_search.html', form=form, searched=products_searched, products=products, sections=sections)
+
+
+@app.route('/manager_apply_filter', methods=['POST'])
+def manager_apply_filter():
+    form = SearchForm(request.form)
+
+    sections = Category.query.all()
+    products = Product.query
+
+    section_id = form.section_id.data
+    rate_sort = form.rate_sort.data
+    min_rate = float(request.form.get('min_rate', 0))
+    max_rate = float(request.form.get('max_rate', 10000))
+    manufacture_date_order = request.form.get('manufacture_date_order')
+
+    if section_id:
+        products = products.filter(Product.section_id == section_id)
+
+    if rate_sort == 'asc':
+        products = products.order_by(Product.rate_per_unit.asc())
+    elif rate_sort == 'desc':
+        products = products.order_by(Product.rate_per_unit.desc())
+
+    products = products.filter(Product.rate_per_unit.between(min_rate, max_rate))
+
+    if manufacture_date_order == 'newest':
+        products = products.order_by(Product.manufacture_date.desc())
+    elif manufacture_date_order == 'oldest':
+        products = products.order_by(Product.manufacture_date.asc())
+
+    products = products.all()
+
+    return render_template('manager_search.html', form=form, products=products, sections=sections)
+
+@app.route('/user_search', methods=['GET', 'POST'])
+def user_search():
+    form = SearchForm()
+    sections = Category.query.all()
+
+    if request.method == 'POST' and form.validate_on_submit():
+        products_searched = form.searched.data
+        products = Product.query.filter(Product.name.like('%' + products_searched + '%')).all()
+    else:
+        products_searched = None
+        products = Product.query.all()
+
+    return render_template('user_search.html', form=form, searched=products_searched, products=products, sections=sections)
+
+
+@app.route('/user_apply_filter', methods=['POST'])
+def user_apply_filter():
+    form = SearchForm(request.form)
+
+    sections = Category.query.all()
+    products = Product.query
+
+    section_id = form.section_id.data
+    rate_sort = form.rate_sort.data
+    min_rate = float(request.form.get('min_rate', 0))
+    max_rate = float(request.form.get('max_rate', 10000))
+    manufacture_date_order = request.form.get('manufacture_date_order')
+
+    if section_id:
+        products = products.filter(Product.section_id == section_id)
+
+    if rate_sort == 'asc':
+        products = products.order_by(Product.rate_per_unit.asc())
+    elif rate_sort == 'desc':
+        products = products.order_by(Product.rate_per_unit.desc())
+
+    products = products.filter(Product.rate_per_unit.between(min_rate, max_rate))
+
+    if manufacture_date_order == 'newest':
+        products = products.order_by(Product.manufacture_date.desc())
+    elif manufacture_date_order == 'oldest':
+        products = products.order_by(Product.manufacture_date.asc())
+
+    products = products.all()
+
+    return render_template('user_search.html', form=form, products=products, sections=sections)
