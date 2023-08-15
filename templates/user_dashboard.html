@@ -77,7 +77,7 @@
         <div class="carousel-inner">
           <!-- Loop through filtered products within the category -->
           {% set product_counter = 0 %}
-          {% for product in filtered_products[category.section_id] %}
+          {% for product in products_by_category[category.section_id] %}
           {% if loop.index0 % 4 == 0 %}
           <div class="carousel-item {% if loop.index0 == 0 %}active{% endif %}">
             <div class="cards-wrapper">

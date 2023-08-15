@@ -21,14 +21,17 @@
           <header>
             <a id="logo" href="{{ url_for('index') }}" style="text-decoration: none;">Grocer<span style="color: white;">Ease</span></a>
             <nav>
+              <form method="POST" action="{{ url_for('user_search') }}">
+                {{ form.hidden_tag() }}
               <div class="input-group">
                 <div class="form-outline">
-                  <input type="search" id="form1" class="form-control" placeholder="Search"/>
+                  <input type="search" id="form1" class="form-control" placeholder="Search" name="searched"/>
                 </div>
                 <button type="button" class="btn btn-success" style="margin-right: 50px;">
                   <i class="fa fa-search " aria-hidden="true"></i>
                 </button>
               </div>
+              </form>
               <a href="{{ url_for('user_dashboard') }}">Home</a>
               <a href="{{ url_for('orders') }}">Orders</a>
               <a href="{{ url_for('logout') }}">Logout</a>
@@ -244,7 +247,7 @@ var observer = new MutationObserver(function(mutationsList) {
       var newLinks = document.querySelectorAll("#checkout, #delete_product");
       for (var newLink of newLinks) {
         newLink.onclick = function() {
-          return confirm("Are you sure you want to delete?");
+          return confirm("Are you sure?");
         };
       }
     }

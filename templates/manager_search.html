@@ -58,7 +58,6 @@
             </button>
           </div>
           </form>
-                <a href="{{ url_for('profile') }}">Profile</a>
                 <a href="{{ url_for('manager_summary') }}">Summary</a>
                 <a href="{{ url_for('logout') }}">Logout</a>
             </nav>
@@ -94,11 +93,10 @@
       
         <div class="col-md-3 filter-container">
             <div class="card shadow p-3 rounded">
-                <h4>Filter</h4>
+                <h4>Filter Products</h4><hr>
                 <form action="{{ url_for('manager_apply_filter') }}" method="post">
-                  <h4>Filter Products</h4>
                   <div class="mb-3">
-                    <label for="section_id" class="form-label">Section ID</label>
+                    <label for="section_id" class="form-label">Categories</label>
                     <select class="form-select" id="section_id" name="section_id">
                         <option value="">All</option>
                         {% for section in sections %}
@@ -122,11 +120,22 @@
                       <option value="oldest">Oldest</option>
                   </select>
               </div>
+              <div class="mb-3">
+                <label for="stock_order" class="form-label">Stock Order</label>
+                <select class="form-select" id="stock_order" name="stock_order">
+                    <option value="">None</option>
+                    <option value="least">Least in Stock</option>
+                    <option value="highest">Highest in Stock</option>
+                </select>
+            </div>
                   <button type="submit" class="btn btn-primary">Apply Filter</button>
                 </form>
             </div>
         </div>
         <div class="col-md-9 offset-md-3 product-column">
+            <div class="search-results">
+              Searched Results: {{ products|length }}/{{ total_products }}
+            </div>
           <div class="row">
               {% for product in products %}
                   <div class="col-md-4 mb-4 product-card">

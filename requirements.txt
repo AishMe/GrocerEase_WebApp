@@ -3,4 +3,5 @@ Flask-SQLAlchemy
 flask-restful
 flask-wtf
 matplotlib
+Flask-JWT-Extended
 #flask-login

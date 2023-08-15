@@ -3,8 +3,8 @@ from flask import current_app as app
 from .database import db
 from application.models import User, Category, Product, Cart, Orders
 from flask_wtf import FlaskForm
-from wtforms import StringField, FloatField, SelectField, SubmitField, PasswordField, BooleanField, ValidationError
-from wtforms.validators import DataRequired, EqualTo, Length
+from wtforms import StringField, FloatField, SelectField, SubmitField, PasswordField
+from wtforms.validators import DataRequired, EqualTo
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from datetime import date
@@ -18,11 +18,12 @@ import base64
 app.config['SECRET_KEY'] = "harekrishna"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.sqlite3'
 
+
 # Create a Search Form
 class SearchForm(FlaskForm):
     searched = StringField("Searched")
-    section_id = StringField("Section ID")  # Add this line
-    rate_sort = StringField("Rate Sorting")  # Add this line
+    section_id = StringField("Section ID")
+    rate_sort = StringField("Rate Sorting")
     submit = SubmitField("Submit")
 
 # Create a Filter Form
@@ -117,28 +118,6 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/user_register', methods=['GET', 'POST'])
-def user_register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        # Check if username already exists in the database
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
-            return "Username already exists. Please choose a different username."
-
-        # Create a new user and add it to the database
-        new_user = User(username=username, password=password, role='User')
-        db.session.add(new_user)
-        db.session.commit()
-
-        # Redirect to user login page
-        return redirect('/user_login')
-
-    return render_template('user_register.html')
-
-
 # Create Custom Error Pages
 
 # Invalid Page
@@ -150,57 +129,6 @@ def page_not_found(e):
 @app.errorhandler(500)
 def page_not_found(e):
     return render_template('error500.html'), 500
-
-
-# Create Password Test Page
-@app.route('/test_pw', methods=["GET", "POST"])
-def test_pw():
-    email = None
-    password = None
-    pw_to_check = None
-    passed = None
-    form = PasswordForm()
-
-    # Validate Form
-    if form.validate_on_submit():
-        email = form.email.data
-        password = form.password_hash.data
-        # Clear the Form
-        form.email.data = ''
-        form.password_hash.data = ''
-        #flash("Registration Successful!!")
-
-    pw_to_check = User.query.filter_by(email=email).first()
-
-    if pw_to_check is not None:
-        passed = check_password_hash(pw_to_check.password_hash, password)
-    else:
-    # Handle the case when the user doesn't exist
-        passed = False
-    
-    return render_template('test_pw.html', 
-                           email = email,
-                           password = password,  
-                           pw_to_check = pw_to_check, 
-                           passed = passed, 
-                           form = form)
-
-
-# Create Name Page
-@app.route('/name', methods=["GET", "POST"])
-def name():
-    name = None
-    form = NamerForm()
-
-    # Validate Form
-    if form.validate_on_submit():
-        name = form.name.data
-        form.name.data = ''
-        flash("Registration Successful!!")
-
-    return render_template('name.html', 
-                           name = name, 
-                           form = form)
 
 
 @app.route('/user/add', methods=['GET', 'POST'])
@@ -324,19 +252,11 @@ def user_dashboard():
         products = Product.query.filter_by(section_id=category.section_id).all()
         products_by_category[category.section_id] = products
 
-    # Get the filter parameters from the query string
-    min_price = float(request.args.get('min_price', 0))
-    max_price = float(request.args.get('max_price', float('inf')))
-
-    # Filter products based on price range
-    filtered_products = {}
-    for category_id, products in products_by_category.items():
-        filtered_products[category_id] = [product for product in products if min_price <= product.rate_per_unit <= max_price]
-
-    return render_template('user_dashboard.html', filtered_products=filtered_products, categories=categories)
+    return render_template('user_dashboard.html', categories=categories, products_by_category=products_by_category)
 
 # Add Category
-@app.route('/manager/add_category', methods=['GET', 'POST'])
+@app.route('/add_category', methods=['GET', 'POST'], endpoint="add_category")
+@login_required(role='manager')
 def add_category():
     name = None
     form = CategoryForm()
@@ -346,10 +266,11 @@ def add_category():
         if category is None:
             category = Category(name=form.cat_name.data, 
                                 cat_image=form.cat_image.data)
+            
             db.session.add(category)
             db.session.commit()
+
         name = form.cat_name.data
-        cat_image = form.cat_image.data
         form.cat_name.data = ''
         form.cat_image.data = ''
 
@@ -364,7 +285,8 @@ def add_category():
 
 
 # Update Database Record in Category
-@app.route('/update_category/<int:section_id>', methods=['GET', 'POST'])
+@app.route('/update_category/<int:section_id>', methods=['GET', 'POST'], endpoint="update_category")
+@login_required(role='manager')
 def update_category(section_id):
     category_to_update = Category.query.get_or_404(section_id)
     form = CategoryForm()
@@ -373,7 +295,6 @@ def update_category(section_id):
         category_to_update.name = form.cat_name.data
         category_to_update.cat_image = form.cat_image.data
 
-        # Update the Database
         db.session.add(category_to_update)
         db.session.commit()
 
@@ -387,7 +308,8 @@ def update_category(section_id):
 
 
 # Delete a Category from the Database Record
-@app.route('/delete_category/<int:section_id>')
+@app.route('/delete_category/<int:section_id>', endpoint="delete_category")
+@login_required(role='manager')
 def delete_category(section_id):
     category_to_delete = Category.query.get_or_404(section_id)
 
@@ -412,7 +334,7 @@ def add_product(section_id):
 
 
     if form.validate_on_submit():
-        # Here, you can save the product details to the database
+
         product = Product(
             name=form.product_name.data,
             rate_per_unit=form.rate.data,
@@ -454,7 +376,6 @@ def update_product(product_id):
         product_to_update.stock = form.stock.data
         product_to_update.image = form.image.data
 
-        # Update the Database
         db.session.add(product_to_update)
         db.session.commit()
 
@@ -486,9 +407,6 @@ def delete_product(product_id):
     except: 
         flash("Woops! There was a problem deleting the product. Please try again...")
         return redirect(url_for('manager_dashboard'))
-
-
-
 
 
 @app.route('/user/login', methods=['GET', 'POST'])
@@ -535,58 +453,10 @@ def manager_login():
     return render_template('manager_login.html', form=form)
 
 
-@app.route('/manager')
-def manager_page():
-    if 'user_id' in session:
-        user_id = session['user_id']
-        manager = User.query.get(user_id)
-        if manager and manager.is_manager:
-            return render_template('manager.html', manager=manager)
-    return redirect(url_for('manager_login'))
-
-
-@app.route('/user')
-def user_page():
-    if 'user_id' in session:
-        user_id = session['user_id']
-        user = User.query.get(user_id)
-        if user and not user.is_manager:
-            return render_template('user.html', user=user)
-    return redirect(url_for('user_login'))
-
-
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
     return redirect(url_for('index'))
-
-'''
-@app.route('/add_to_cart', methods=['POST'])
-def add_to_cart():
-    product_name = request.form.get('product_name')
-    quantity = int(request.form.get('quantity'))
-
-    # Save the cart item to the database
-    cart_item = CartItem(product_name=product_name, quantity=quantity)
-    db.session.add(cart_item)
-    db.session.commit()
-
-    flash("Item added to Cart Successfully", "success")
-    return redirect(url_for('user_dashboard'))
-
-@app.route('/buy_item', methods=['POST'])
-def buy_item():
-    product_name = request.form.get('product_name')
-    quantity = int(request.form.get('quantity'))
-
-    # Create a new purchase item
-    purchase_item = PurchaseItem(product_name=product_name, quantity=quantity)
-    db.session.add(purchase_item)
-    db.session.commit()
-
-    flash("Item bought Successfully", "success")
-    return redirect(url_for('user_dashboard'))
-'''
 
 
 @app.route('/cart', endpoint='cart')
@@ -783,28 +653,6 @@ def add_to_cart_or_purchase():
         return redirect(url_for('orders'))
 
 
-@app.route('/update_cart_item', methods=['POST'], endpoint='update_cart_item')
-@login_required('user')
-def update_cart_item():
-    user_id = session['user_id']
-    product_id = request.form.get('product_id')
-    quantity = request.form.get('quantity')
-
-    # Get the cart item for the current user and product
-    cart_item = Cart.query.filter_by(user_id=user_id, product_id=product_id).first()
-
-    if cart_item:
-        # Update the quantity of the cart item
-        cart_item.quantity = quantity
-        db.session.commit()
-
-        flash('Item quantity updated successfully!', 'success')
-    else:
-        flash('Cart item not found!', 'danger')
-
-    return redirect(url_for('cart'))
-
-
 @app.route('/delete_cart_item', methods=['POST'], endpoint='delete_cart_item')
 @login_required('user')
 def delete_cart_item():
@@ -825,8 +673,6 @@ def delete_cart_item():
 
     return redirect(url_for('cart'))
 
-
-# ... (previous imports and code) ...
 
 @app.route('/manager/summary', endpoint='manager_summary')
 @login_required(role='manager')
@@ -939,17 +785,17 @@ def calculate_average_money_spent():
 def calculate_out_of_stock_items():
     # Find products that are out of stock
     out_of_stock_products = Product.query.filter(Product.stock == 0).all()
-    out_of_stock_item_names = [product.name for product in out_of_stock_products]
-    return len(out_of_stock_item_names)
+    #out_of_stock_item_names = [product.name for product in out_of_stock_products]
+    return len(out_of_stock_products)
 
 
 def calculate_least_of_stock_items():
     # Get the least in stock products
     least_of_stock = db.session.query(Product, Category, Product.stock).\
         join(Category, Product.section_id == Category.section_id).\
-        order_by(Product.stock).filter(Product.stock <= 200).all()
+        order_by(Product.stock).filter(Product.stock <= 50).all()
 
-    return least_of_stock
+    return len(least_of_stock)
 
 def get_image_base64():
     buffer = io.BytesIO()
@@ -998,6 +844,7 @@ def manager_apply_filter():
     min_rate = float(request.form.get('min_rate', 0))
     max_rate = float(request.form.get('max_rate', 10000))
     manufacture_date_order = request.form.get('manufacture_date_order')
+    stock_order = request.form.get('stock_order')
 
     if section_id:
         products = products.filter(Product.section_id == section_id)
@@ -1014,9 +861,15 @@ def manager_apply_filter():
     elif manufacture_date_order == 'oldest':
         products = products.order_by(Product.manufacture_date.asc())
 
-    products = products.all()
+    if stock_order == 'least':
+        products = products.order_by(Product.stock.asc())
+    elif stock_order == 'highest':
+        products = products.order_by(Product.stock.desc())
 
-    return render_template('manager_search.html', form=form, products=products, sections=sections)
+    products = products.all()
+    total_products = Product.query.count()
+
+    return render_template('manager_search.html', form=form, products=products, sections=sections, total_products=total_products)
 
 @app.route('/user_search', methods=['GET', 'POST'])
 def user_search():
@@ -1062,5 +915,6 @@ def user_apply_filter():
         products = products.order_by(Product.manufacture_date.asc())
 
     products = products.all()
+    total_products = Product.query.count()
 
-    return render_template('user_search.html', form=form, products=products, sections=sections)
+    return render_template('user_search.html', form=form, products=products, sections=sections, total_products=total_products)
